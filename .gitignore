@@ -1,0 +1,33 @@
+# C++ / CMake Build-Artefakte
+build/
+bin/
+lib/
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.dylib
+*.exe
+*.out
+*.app
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+cmake-build-debug/
+cmake-build-release/
+cmake-build-*/
+
+# VSCode
+.vscode/
+
+# CLion
+.idea/
+
+# OS-spezifisch
+.DS_Store
+Thumbs.db
+desktop.ini
