@@ -233,8 +233,8 @@ void Planet::createObject(){
     // unbind vertex array object
     glBindVertexArray(0);
     // delete buffers (the data is stored in the vertex array object)
-    glDeleteBuffers(1, &position_buffer);
-    glDeleteBuffers(1, &index_buffer);
+   // glDeleteBuffers(1, &position_buffer);
+   // glDeleteBuffers(1, &index_buffer);
 
     // check for errors
     VERIFY(CG::checkError());
