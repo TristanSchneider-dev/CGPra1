@@ -11,10 +11,12 @@
 #include "glwidget.hpp"
 
 #include <QMouseEvent>
+#include <QWheelEvent>
 
 #define GLM_FORCE_RADIANS
 #define GLM_SWIZZLE
 #include <glm/gtx/transform.hpp>
+#include <glm/glm.hpp>
 
 #include "gui/config.h"
 
@@ -113,7 +115,8 @@ void GLWidget::resizeGL(int width, int height)
     // update the viewport
     glViewport(0, 0, width, height);
 
-    /// TODO: store the resolution in the config in case someone needs it
+    _width = width;
+    _height = (height > 0) ? height : 1; // Division durch 0 verhindern
 }
 
 void GLWidget::paintGL()
@@ -124,9 +127,9 @@ void GLWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
 
-    /// TODO: calculate projection matrix from resolution
+    float aspectRatio = static_cast<float>(_width) / static_cast<float>(_height);
     glm::mat4 projection_matrix = glm::perspective(glm::radians(50.0f),
-                783.0f / 691,
+                aspectRatio,
                 0.1f, 100.0f);
 
 
@@ -138,33 +141,46 @@ void GLWidget::paintGL()
 
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
-    // ignore if it was not the left mouse button
-    if(!event->button() & Qt::LeftButton)
-        return;
-
-    /// TODO: handle left press here
+    if(event->button() == Qt::LeftButton)
+    {
+        _isMousePressed = true;
+        _lastMousePos = event->pos();
+    }
 }
 
 void GLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
-    // ignore if it was not the left mouzse button
-    if(!event->button() & Qt::LeftButton)
-        return;
-
-    /// TODO: handle left release here
+    if(event->button() == Qt::LeftButton)
+    {
+        _isMousePressed = false;
+    }
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
-    /// TODO: handle camera movement here
+    if (_isMousePressed)
+    {
+        QPoint delta = event->pos() - _lastMousePos;
+        _lastMousePos = event->pos();
+
+        float sensitivity = 0.01f; // In Radian pro Pixel
+        _cameraAngleX -= delta.x() * sensitivity;
+        _cameraAngleY += delta.y() * sensitivity;
+
+        // Clamping
+        float maxAngleY = glm::radians(89.0f);
+        _cameraAngleY = glm::clamp(_cameraAngleY, -maxAngleY, maxAngleY);
+    }
 }
 
 void GLWidget::wheelEvent(QWheelEvent *event)
 {
-    /// TODO: handle zoom here
+    float delta = event->angleDelta().ry();
+    float sensitivity = 0.01f;
+    _cameraDistance -= delta * sensitivity;
 
-    // Hint: you can use:
-    // event->angleDelta().ry()
+    // Clamping
+    _cameraDistance = glm::clamp(_cameraDistance, 0.5f, 50.0f);
 }
 
 void GLWidget::animateGL()
@@ -178,8 +194,15 @@ void GLWidget::animateGL()
     _stopWatch.restart();
 
     // calculate current modelViewMatrix for the default camera
-    /// TODO: use your camera logic here
-    glm::mat4 modelViewMatrix = glm::lookAt(glm::vec3(0.0, 0.0, -5.0), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0, 1.0, 0.0));
+    float camX = _cameraDistance * cos(_cameraAngleY) * sin(_cameraAngleX);
+    float camY = _cameraDistance * sin(_cameraAngleY);
+    float camZ = _cameraDistance * cos(_cameraAngleY) * cos(_cameraAngleX);
+
+    glm::vec3 cameraPosition = glm::vec3(camX, camY, camZ);
+    glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+    glm::mat4 modelViewMatrix = glm::lookAt(cameraPosition, cameraTarget, cameraUp);
 
     // update drawables
     /// TODO update all drawables
@@ -188,5 +211,3 @@ void GLWidget::animateGL()
     // update the widget (do not remove this!)
     update();
 }
-
-

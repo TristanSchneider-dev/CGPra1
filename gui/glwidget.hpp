@@ -15,6 +15,7 @@
 #include <QOpenGLWidget>
 #include <QOpenGLContext>
 #include <QTimer>
+#include <QPoint>
 
 /*
  * Forward decleration
@@ -41,6 +42,18 @@ private:
     std::shared_ptr<Planet> _earth;                 /**< The root element of the planet hierarchy */
     std::shared_ptr<Skybox> _skybox;                /**< Skybox (not part of the hierarchy */
     std::shared_ptr<CoordinateSystem> _coordSystem; /**< Coordinate system (not part of the hierarchy) */
+
+    // Kamera-Variablen
+    bool _isMousePressed = false;
+    QPoint _lastMousePos;
+    float _cameraAngleX = 0.0f;
+    float _cameraAngleY = 0.0f;
+    float _cameraDistance = 5.0f;
+
+    // Fenstergröße
+    int _width = 1;
+    int _height = 1;
+
 
 private slots:
     /**
