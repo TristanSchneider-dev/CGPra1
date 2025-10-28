@@ -106,8 +106,9 @@ void GLWidget::initializeGL()
     // make sure the context is current
     makeCurrent();
 
-    /// TODO: Init all drawables here
-    _earth->init();
+    _earth->init();       // AUSKOMMENTIERT
+    //_coordSystem->init(); // AUSKOMMENTIERT
+    _skybox->init();        // Nur Skybox initialisieren
 }
 
 void GLWidget::resizeGL(int width, int height)
@@ -121,11 +122,10 @@ void GLWidget::resizeGL(int width, int height)
 
 void GLWidget::paintGL()
 {
-    /// TODO: recreate the scene if needed
-
     // Render: set up view
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE); // Culling global aktivieren (gut!)
 
     float aspectRatio = static_cast<float>(_width) / static_cast<float>(_height);
     glm::mat4 projection_matrix = glm::perspective(glm::radians(50.0f),
@@ -135,8 +135,18 @@ void GLWidget::paintGL()
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    /// TODO: call draw for all drawables
+    // Normale Objekte zeichnen
+    //_coordSystem->draw(projection_matrix);
+
+    // === TEST: Culling für den Würfel deaktivieren ===
+    glDisable(GL_CULL_FACE);
     _earth->draw(projection_matrix);
+    glEnable(GL_CULL_FACE); // Culling für den Rest wieder an
+    // ===============================================
+
+    // Skybox als letztes zeichnen
+    // (Diese kümmert sich selbst um ihren Culling-Status)
+    _skybox->draw(projection_matrix);
 }
 
 void GLWidget::mousePressEvent(QMouseEvent *event)
@@ -205,8 +215,9 @@ void GLWidget::animateGL()
     glm::mat4 modelViewMatrix = glm::lookAt(cameraPosition, cameraTarget, cameraUp);
 
     // update drawables
-    /// TODO update all drawables
-    _earth->update(timeElapsedMs, modelViewMatrix);
+    _earth->update(timeElapsedMs, modelViewMatrix);       // AUSKOMMENTIERT
+    //_coordSystem->update(timeElapsedMs, modelViewMatrix); // AUSKOMMENTIERT
+    _skybox->update(timeElapsedMs, modelViewMatrix);        // Nur Skybox updaten
 
     // update the widget (do not remove this!)
     update();

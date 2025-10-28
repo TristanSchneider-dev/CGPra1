@@ -57,9 +57,33 @@ GLuint Drawable::loadTexture(std::string path){
 
     GLuint textureID;
 
-    /// TODO your code here
+    // Textur generieren und binden
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
 
-    // Hint: you can use image.width(), image.height() and image.data()
+    // Textur-Parameter setzen (Wrapping und Filtering)
+    // GL_REPEAT ist Standard für die meisten Texturen
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // Lineares Filtering mit Mipmaps für Minification
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    // Lineares Filtering für Magnification
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // Texturdaten in den GPU-Speicher laden
+    // image.h/cpp stellt sicher, dass das Format RGBA8888 ist
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                 image.getWidth(),  //
+                 image.getHeight(), //
+                 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                 image.getData()); //
+
+    // Mipmaps generieren
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    // Bindung aufheben
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     return textureID;
 }
