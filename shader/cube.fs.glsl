@@ -1,13 +1,11 @@
-#version 400
+#version 330 core
+out vec4 FragColor;
 
-// get color from vertex shader
-in vec3 vcolor;
+// Empfängt die Farbe vom Vertex Shader
+in vec3 vColor;
 
-// send color to screen
-layout(location = 0) out vec4 fcolor;
-
-void main(void)
+void main()
 {
-    // set fragment color
-    fcolor = vec4(normalize(vcolor), 1);
+    // Gib einfach die interpolierte Farbe aus
+    FragColor = vec4(vColor, 1.0);
 }

@@ -81,8 +81,8 @@ add_executable(tychobrahe
     planets/sun.cpp
     planets/sun.h
 
-    shader/cube.vs.glsl
-    shader/cube.fs.glsl
+        shader/skybox.vs.glsl
+        shader/skybox.fs.glsl
 )
 
 include_directories(${CMAKE_SOURCE_DIR}/glbase ${OPENGL_INCLUDE_DIR})
