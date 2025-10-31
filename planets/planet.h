@@ -86,6 +86,11 @@ protected:
 
     unsigned int _indexCount = 0; /**< Number of indices for drawing the object */
 
+    // NEU: Hinzugefügt, um die Textur zu verwalten
+    std::string _textureLocation; /**< Der Pfad zur Texturdatei (z.B. earth.bmp) */
+    GLuint _textureID = 0;        /**< Die OpenGL ID für die geladene Textur */
+
+
     std::shared_ptr<Orbit> _orbit;  /**< the local orbit of this planet */
     std::shared_ptr<Path> _path;    /**< the global path of this orbit */
 

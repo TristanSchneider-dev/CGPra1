@@ -10,14 +10,14 @@
 #include <algorithm>
 #include <iostream>
 #include <stack>
-#include <vector> // Hinzugefügt für die Geometrieerstellung
+#include <vector>
 
 #include "glbase/gltool.hpp"
 
 #include "gui/config.h"
 
 #include "planets/cone.h"
-#include "planets/sun.h"
+#include "planets/sun.h" // Wichtig für die Beleuchtung
 #include "planets/orbit.h"
 #include "planets/path.h"
 
@@ -26,13 +26,15 @@ Planet::Planet(std::string name,
                float distance,
                float hoursPerDay,
                unsigned int daysPerYear,
-               std::string textureLocation):
+               std::string textureLocation): // Dieser Parameter kommt herein
     Drawable(name),
     _radius(radius),
     _distance(distance),
     _localRotation(0),
     _localRotationSpeed(0),
-    _daysPerYear(daysPerYear)
+    _daysPerYear(daysPerYear),
+    _textureLocation(textureLocation), // NEU: Speichern des Texturpfads
+    _textureID(0)                      // NEU: Initialisieren der Textur-ID
 {
     _localRotationSpeed = 1.0f / hoursPerDay; // for local rotation:one step equals one hour
 
@@ -46,7 +48,15 @@ void Planet::init()
 {
     Drawable::init();
 
-    /// TODO: load texture
+    // NEU: Textur laden
+    if (!_textureLocation.empty())
+    {
+        _textureID = loadTexture(_textureLocation);
+        if (_textureID == 0)
+        {
+            std::cerr << "Could not load texture for " << _name << " from " << _textureLocation << std::endl;
+        }
+    }
 
     /// TODO: init children, orbit and path
 }
@@ -78,16 +88,45 @@ void Planet::draw(glm::mat4 projection_matrix) const
     // bin vertex array object
     glBindVertexArray(_vertexArrayObject);
 
+    // --- NEU: Texturen und Licht-Uniforms setzen ---
+
+    // 1. Textur binden
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _textureID);
+    // Dem Shader sagen, dass uTextureSampler auf Textur-Einheit 0 liegt
+    glUniform1i(glGetUniformLocation(_program, "uTextureSampler"), 0);
+
+    // 2. Licht-Uniforms setzen
+    // Annahme: Die Sonne (Lichtquelle) ist im Zentrum des View-Space (0,0,0)
+    // Dies ist eine Vereinfachung. Besser wäre: _sun->getPosition()
+    glm::vec3 lightPosView = glm::vec3(0.0f, 0.0f, 0.0f);
+    glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Hartcodiertes weißes Licht
+
+    if (_sun)
+    {
+        // Sobald deine Sun-Klasse eine getPosition() und getColor() Methode hat,
+        // kannst du die hartcodierten Werte oben ersetzen.
+        // z.B. lightPosView = _sun->getPosition();
+        // z.B. lightColor = _sun->getColor();
+    }
+
+    glUniform3fv(glGetUniformLocation(_program, "uLightPosView"), 1, glm::value_ptr(lightPosView));
+    glUniform3fv(glGetUniformLocation(_program, "uLightColor"), 1, glm::value_ptr(lightColor));
+    // --- Ende NEU ---
+
+
     // set parameter
     glUniformMatrix4fv(glGetUniformLocation(_program, "projection_matrix"), 1, GL_FALSE, glm::value_ptr(projection_matrix));
     glUniformMatrix4fv(glGetUniformLocation(_program, "modelview_matrix"), 1, GL_FALSE, glm::value_ptr(_modelViewMatrix));
 
     // call draw
-    // Die feste '36' wurde durch _indexCount ersetzt
     glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, 0);
 
     // unbin vertex array object
     glBindVertexArray(0);
+
+    // NEU: Textur-Bindung aufheben (gute Praxis)
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     // check for errors
     VERIFY(CG::checkError());
@@ -140,8 +179,6 @@ void Planet::addChild(std::shared_ptr<Planet> child)
 void Planet::createObject(){
 
     // Auflösung der Kugel (kann angepasst werden)
-    // Um die Anforderung "Auflösung pro Objekt angepasst" zu erfüllen,
-    // könnte man diese Werte auch als Member der Klasse (im Konstruktor gesetzt) definieren.
     unsigned int latitudeSegments = 30;
     unsigned int longitudeSegments = 30;
 
@@ -196,7 +233,6 @@ void Planet::createObject(){
         }
     }
 
-    // Annahme: _indexCount ist Teil der Basisklasse Drawable
     _indexCount = static_cast<unsigned int>(indices.size());
 
 
@@ -238,29 +274,20 @@ void Planet::createObject(){
     // unbind vertex array object
     glBindVertexArray(0);
 
-    // Buffer können gelöscht werden, da sie im VAO "gespeichert" sind
-    // (Die Kommentare im Originalcode wurden beibehalten)
-    // glDeleteBuffers(1, &position_buffer);
-    // glDeleteBuffers(1, &normal_buffer);
-    // glDeleteBuffers(1, &texcoord_buffer);
-    // glDeleteBuffers(1, &index_buffer);
-
     // check for errors
     VERIFY(CG::checkError());
 }
 
 std::string Planet::getVertexShader() const
 {
-    // Diese Shader müssen ggf. angepasst werden, um Normalen (loc 1)
-    // und Texturkoordinaten (loc 2) zu verarbeiten.
+    // Geändert: Verwendet den neuen Beleuchtungs-Shader
     return Drawable::loadShaderFile(":/shader/phong.vs.glsl");
 
 }
 
 std::string Planet::getFragmentShader() const
 {
-    // Diese Shader müssen ggf. angepasst werden, um Normalen
-    // und Texturkoordinaten zu verarbeiten (z.B. für Beleuchtung).
+    // Geändert: Verwendet den neuen Beleuchtungs-Shader
     return Drawable::loadShaderFile(":/shader/phong.fs.glsl");
 }
 
