@@ -21,7 +21,17 @@ public:
      */
     glm::vec3 getPosition() const;
 
-    /// TODO: add a draw mechanism
+protected:
+    // NEU: Überschreiben der Shader-Methoden von Planet
+    /**
+     * @see Drawable::getVertexShader()
+     */
+    virtual std::string getVertexShader() const override;
+
+    /**
+     * @see Drawable::getFragmentShader()
+     */
+    virtual std::string getFragmentShader() const override;
 
 };
 

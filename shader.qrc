@@ -4,5 +4,9 @@
         <file>shader/phong.fs.glsl</file>
         <file>shader/simple.vs.glsl</file>
         <file>shader/simple.fs.glsl</file>
+        <file>shader/sun.vs.glsl</file>
+        <file>shader/sun.fs.glsl</file>
+        <file>shader/path.vs.glsl</file>
+        <file>shader/path.fs.glsl</file>
     </qresource>
 </RCC>

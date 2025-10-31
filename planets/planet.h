@@ -84,9 +84,11 @@ protected:
     float _localRotation;       /**< the current local roation */
     float _localRotationSpeed;  /**< the speed at which the planet spins */
 
+    float _globalRotation;      /**< the current global roation */
+    float _globalRotationSpeed; /**< the speed at which the planet orbits */
+
     unsigned int _indexCount = 0; /**< Number of indices for drawing the object */
 
-    // NEU: Hinzugefügt, um die Textur zu verwalten
     std::string _textureLocation; /**< Der Pfad zur Texturdatei (z.B. earth.bmp) */
     GLuint _textureID = 0;        /**< Die OpenGL ID für die geladene Textur */
 
@@ -140,12 +142,12 @@ protected:
 
     /**
      * @brief updatePath updates the current position and saves a path point
-     * @param elapsedTimeMs the number of days that should be simulated
+     * @param elapsedSimulatedDays the number of days that should be simulated
      *
      * This method should only be used when the path is
      * precalculated.
      */
-    virtual void updatePath(float elapsedTimeMs, glm::mat4 modelViewMatrix);
+    virtual void updatePath(float elapsedSimulatedDays, glm::mat4 modelViewMatrix);
     /**
      * @brief addPathPoint adds the current position to the path
      */

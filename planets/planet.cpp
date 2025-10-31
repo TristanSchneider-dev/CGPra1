@@ -26,29 +26,40 @@ Planet::Planet(std::string name,
                float distance,
                float hoursPerDay,
                unsigned int daysPerYear,
-               std::string textureLocation): // Dieser Parameter kommt herein
+               std::string textureLocation):
     Drawable(name),
     _radius(radius),
     _distance(distance),
     _localRotation(0),
     _localRotationSpeed(0),
     _daysPerYear(daysPerYear),
-    _textureLocation(textureLocation), // NEU: Speichern des Texturpfads
-    _textureID(0)                      // NEU: Initialisieren der Textur-ID
+    _textureLocation(textureLocation),
+    _textureID(0),
+    _globalRotation(0)
 {
-    _localRotationSpeed = 1.0f / hoursPerDay; // for local rotation:one step equals one hour
+    // Definiere Geschwindigkeiten in "Grad pro Tag"
+
+    // Lokale Geschwindigkeit: (Grad pro simuliertem Tag)
+    if (hoursPerDay > 0.0f)
+        _localRotationSpeed = (24.0f / hoursPerDay) * 360.0f;
+    else
+        _localRotationSpeed = 0.0f;
+
+    // Globale Geschwindigkeit: (Grad pro simuliertem Tag)
+    if (daysPerYear > 0)
+        _globalRotationSpeed = 360.0f / daysPerYear;
+    else
+        _globalRotationSpeed = 0.0f;
 
     _orbit = std::make_shared<Orbit>(name + " Orbit", _distance);
     _path = std::make_shared<Path>(name + " Pfad");
-
-    /// TODO: init global rotation parameters
 }
 
 void Planet::init()
 {
     Drawable::init();
 
-    // NEU: Textur laden
+    // Textur laden
     if (!_textureLocation.empty())
     {
         _textureID = loadTexture(_textureLocation);
@@ -58,24 +69,41 @@ void Planet::init()
         }
     }
 
-    /// TODO: init children, orbit and path
+    // REKURSION: Kinder und zugehörige Objekte initialisieren
+    _orbit->init();
+    _path->init();
+    for (const auto& child : _children)
+    {
+        child->init();
+    }
 }
 
 void Planet::recreate()
 {
     Drawable::recreate();
-    /// TODO: recreate all drawables that belong to this planet
-    // Hint: not all drawables need to be recreated
+
+    // REKURSION: Kinder und zugehörige Objekte neu erstellen
+    _orbit->recreate();
+    _path->recreate();
+    for (const auto& child : _children)
+    {
+        child->recreate();
+    }
 }
 
 
 
 void Planet::draw(glm::mat4 projection_matrix) const
 {
+    // REKURSION: Zuerst Orbit, Pfad und Kinder zeichnen
+    _orbit->draw(projection_matrix);
+    _path->draw(projection_matrix);
+    for (const auto& child : _children)
+    {
+        child->draw(projection_matrix);
+    }
 
-    /// TODO: replace this with your code
-
-    /// TODO: call draw on all drawables that belong to the planet
+    // --- Jetzt das eigentliche Planeten-Objekt zeichnen ---
 
     if(_program == 0){
         std::cerr << "Planet" << _name << "not initialized. Call init() first." << std::endl;
@@ -88,32 +116,25 @@ void Planet::draw(glm::mat4 projection_matrix) const
     // bin vertex array object
     glBindVertexArray(_vertexArrayObject);
 
-    // --- NEU: Texturen und Licht-Uniforms setzen ---
+    // Texturen und Licht-Uniforms setzen
 
     // 1. Textur binden
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _textureID);
-    // Dem Shader sagen, dass uTextureSampler auf Textur-Einheit 0 liegt
     glUniform1i(glGetUniformLocation(_program, "uTextureSampler"), 0);
 
     // 2. Licht-Uniforms setzen
-    // Annahme: Die Sonne (Lichtquelle) ist im Zentrum des View-Space (0,0,0)
-    // Dies ist eine Vereinfachung. Besser wäre: _sun->getPosition()
     glm::vec3 lightPosView = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Hartcodiertes weißes Licht
+    glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Standard-Licht
 
     if (_sun)
     {
-        // Sobald deine Sun-Klasse eine getPosition() und getColor() Methode hat,
-        // kannst du die hartcodierten Werte oben ersetzen.
-        // z.B. lightPosView = _sun->getPosition();
-        // z.B. lightColor = _sun->getColor();
+        // Echte Position der Sonne verwenden
+        lightPosView = _sun->getPosition();
     }
 
     glUniform3fv(glGetUniformLocation(_program, "uLightPosView"), 1, glm::value_ptr(lightPosView));
     glUniform3fv(glGetUniformLocation(_program, "uLightColor"), 1, glm::value_ptr(lightColor));
-    // --- Ende NEU ---
-
 
     // set parameter
     glUniformMatrix4fv(glGetUniformLocation(_program, "projection_matrix"), 1, GL_FALSE, glm::value_ptr(projection_matrix));
@@ -124,8 +145,6 @@ void Planet::draw(glm::mat4 projection_matrix) const
 
     // unbin vertex array object
     glBindVertexArray(0);
-
-    // NEU: Textur-Bindung aufheben (gute Praxis)
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // check for errors
@@ -134,38 +153,53 @@ void Planet::draw(glm::mat4 projection_matrix) const
 
 void Planet::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 {
-    ///TODO: calculate global rotation
+    // REKURSION: Orbit und Pfad updaten (mit der Matrix des Parents)
+    _orbit->update(elapsedTimeMs, modelViewMatrix);
+    _path->update(elapsedTimeMs, modelViewMatrix);
 
-    ///TODO: update all drawables that belong to the planet
+    // KORRIGIERT: Basisgeschwindigkeit 60x langsamer gemacht
+    // Annahme: Config::animationSpeed = 1.0 -> 1 simulierter Tag pro reale Minute (60000ms)
+    float elapsedSimulatedDays = (elapsedTimeMs / 60000.0f) * Config::animationSpeed;
 
+    // 1. Globale Rotation (Orbit) berechnen
+    _globalRotation += elapsedSimulatedDays * _globalRotationSpeed;
+    while(_globalRotation >= 360.f) _globalRotation -= 360.0f;
+    while(_globalRotation < 0.0f) _globalRotation += 360.0f;
 
-    // calculate new local rotation
+    // 2. Lokale Rotation (Drehung) berechnen
     if(Config::localRotation)
-        _localRotation += elapsedTimeMs * _localRotationSpeed * Config::animationSpeed;
+        _localRotation += elapsedSimulatedDays * _localRotationSpeed;
+    while(_localRotation >= 360.f) _localRotation -= 360.0f;
+    while(_localRotation < 0.0f) _localRotation += 360.0f;
 
-    // keep rotation between 0 and 360
-    while(_localRotation >= 360.f)
-        _localRotation -= 360.0f;
-    while(_localRotation < 0.0f)
-        _localRotation += 360.0f;
 
-    // apply local rotation to model view matrix
-    // Hint: The stack is currently useless, but could be useful for you
+    // Eigene ModelView-Matrix berechnen
     std::stack<glm::mat4> modelview_stack;
-
     modelview_stack.push(modelViewMatrix);
 
-        // rotate around y-axis
+        // 1. Rotiere um den Parent (z.B. Sonne) auf der Y-Achse
+        modelview_stack.top() = glm::rotate(modelview_stack.top(), glm::radians(_globalRotation), glm::vec3(0,1,0));
+        // 2. Schiebe auf die Distanz (Orbit-Radius) entlang der X-Achse
+        modelview_stack.top() = glm::translate(modelview_stack.top(), glm::vec3(_distance, 0, 0));
+        // 3. Wende die lokale Rotation an (Drehung um sich selbst)
         modelview_stack.top() = glm::rotate(modelview_stack.top(), glm::radians(_localRotation), glm::vec3(0,1,0));
+
         _modelViewMatrix = glm::mat4(modelview_stack.top());
 
     modelview_stack.pop();
+
+    // REKURSION: Kinder updaten (mit der *neuen* Matrix dieses Planeten)
+    for (const auto& child : _children)
+    {
+        child->update(elapsedTimeMs, _modelViewMatrix);
+    }
 }
 
 void Planet::setLights(std::shared_ptr<Sun> sun, std::shared_ptr<Cone> laser)
 {
     _sun = sun;
     _laser = laser;
+    // REKURSION: Lichter an Kinder weitergeben
     for(auto child : _children)
         child->setLights(sun, laser);
 }
@@ -178,7 +212,7 @@ void Planet::addChild(std::shared_ptr<Planet> child)
 
 void Planet::createObject(){
 
-    // Auflösung der Kugel (kann angepasst werden)
+    // Auflösung der Kugel
     unsigned int latitudeSegments = 30;
     unsigned int longitudeSegments = 30;
 
@@ -203,15 +237,15 @@ void Planet::createObject(){
             float z = _radius * cos(latitudeAngle) * sin(longitudeAngle);
             positions.push_back(glm::vec3(x, y, z));
 
-            // Normale (für Kugel am Ursprung = normalisierter Positionsvektor)
+            // Normale
             normals.push_back(glm::normalize(glm::vec3(x, y, z)));
 
             // Texturkoordinaten
-            texCoords.push_back(glm::vec2(u, 1.0f - v)); // 1.0f - v, da Texturen oft oben links starten
+            texCoords.push_back(glm::vec2(u, 1.0f - v));
         }
     }
 
-    // Indizes für die Dreiecke (Grid aus Quads)
+    // Indizes
     for (unsigned int i = 0; i < latitudeSegments; ++i)
     {
         for (unsigned int j = 0; j < longitudeSegments; ++j)
@@ -221,12 +255,10 @@ void Planet::createObject(){
             unsigned int v3 = ((i + 1) * (longitudeSegments + 1)) + j;
             unsigned int v4 = v3 + 1;
 
-            // Erstes Dreieck
             indices.push_back(v1);
             indices.push_back(v3);
             indices.push_back(v2);
 
-            // Zweites Dreieck
             indices.push_back(v2);
             indices.push_back(v3);
             indices.push_back(v4);
@@ -235,13 +267,11 @@ void Planet::createObject(){
 
     _indexCount = static_cast<unsigned int>(indices.size());
 
-
-    // Set up a vertex array object for the geometry
     if(_vertexArrayObject == 0)
         glGenVertexArrays(1, &_vertexArrayObject);
     glBindVertexArray(_vertexArrayObject);
 
-    // fill vertex array object with data
+    // VBOs
     GLuint position_buffer;
     glGenBuffers(1, &position_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, position_buffer);
@@ -249,7 +279,6 @@ void Planet::createObject(){
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0); // layout (location = 0)
     glEnableVertexAttribArray(0);
 
-    // Normalen-Buffer
     GLuint normal_buffer;
     glGenBuffers(1, &normal_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
@@ -257,7 +286,6 @@ void Planet::createObject(){
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0); // layout (location = 1)
     glEnableVertexAttribArray(1);
 
-    // Texturkoordinaten-Buffer
     GLuint texcoord_buffer;
     glGenBuffers(1, &texcoord_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, texcoord_buffer);
@@ -271,23 +299,20 @@ void Planet::createObject(){
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
-    // unbind vertex array object
     glBindVertexArray(0);
-
-    // check for errors
     VERIFY(CG::checkError());
 }
 
 std::string Planet::getVertexShader() const
 {
-    // Geändert: Verwendet den neuen Beleuchtungs-Shader
+    // Verwendet den Beleuchtungs-Shader
     return Drawable::loadShaderFile(":/shader/phong.vs.glsl");
 
 }
 
 std::string Planet::getFragmentShader() const
 {
-    // Geändert: Verwendet den neuen Beleuchtungs-Shader
+    // Verwendet den Beleuchtungs-Shader
     return Drawable::loadShaderFile(":/shader/phong.fs.glsl");
 }
 
@@ -297,16 +322,19 @@ Planet::~Planet(){
 
 /*************************************************
  * Hint: You don't need to change the code below *
+ * KORRIGIERTE PATH-LOGIK
  *************************************************/
 
 void Planet::calculatePath(glm::mat4 modelViewMatrix)
 {
-    // Hint: if you have some time left you can optimize this method
+    // Diese Funktion berechnet den Pfad für alle Kinder
     for(auto child : _children){
         unsigned int longestCommonMultiple = child->getCommonYears(_daysPerYear);
+        // Simuliere 'longestCommonMultiple' Tage
         for(unsigned int i = 0; i <= longestCommonMultiple; i++){
-            float step = 360.0f * _daysPerYear / Config::animationSpeed;
-            child->updatePath(step, modelViewMatrix);
+            // Simuliere einen Tag pro Schritt
+            float elapsedSimulatedDays = 1.0f;
+            child->updatePath(elapsedSimulatedDays, modelViewMatrix);
         }
     }
      createPath();
@@ -331,20 +359,50 @@ unsigned int Planet::greatestCommonDivisor(unsigned int a, unsigned int b)
         return greatestCommonDivisor(b, a % b);
 }
 
-void Planet::updatePath(float elapsedTimeMs, glm::mat4 modelViewMatrix)
+// KORRIGIERT: Parametername und Logik
+void Planet::updatePath(float elapsedSimulatedDays, glm::mat4 modelViewMatrix)
 {
-    update(elapsedTimeMs, modelViewMatrix);
+    // Diese Funktion simuliert die Bewegung basierend auf 'elapsedSimulatedDays'
+    // und ruft SICH SELBST rekursiv für Kinder auf.
+    // Sie ruft NICHT die normale update() Methode auf.
+
+    // 1. Globale Rotation (Orbit) berechnen
+    _globalRotation += elapsedSimulatedDays * _globalRotationSpeed;
+    while(_globalRotation >= 360.f) _globalRotation -= 360.0f;
+    while(_globalRotation < 0.0f) _globalRotation += 360.0f;
+
+    // 2. Lokale Rotation (Drehung) berechnen
+    _localRotation += elapsedSimulatedDays * _localRotationSpeed;
+    while(_localRotation >= 360.f) _localRotation -= 360.0f;
+    while(_localRotation < 0.0f) _localRotation += 360.0f;
+
+    // Eigene ModelView-Matrix berechnen
+    std::stack<glm::mat4> modelview_stack;
+    modelview_stack.push(modelViewMatrix);
+        modelview_stack.top() = glm::rotate(modelview_stack.top(), glm::radians(_globalRotation), glm::vec3(0,1,0));
+        modelview_stack.top() = glm::translate(modelview_stack.top(), glm::vec3(_distance, 0, 0));
+        modelview_stack.top() = glm::rotate(modelview_stack.top(), glm::radians(_localRotation), glm::vec3(0,1,0));
+        _modelViewMatrix = glm::mat4(modelview_stack.top());
+    modelview_stack.pop();
+
+    // Pfadpunkt für DIESEN Planeten hinzufügen
     addPathPoint();
+
+    // REKURSION: Path-Update für Kinder aufrufen
+    for (const auto& child : _children)
+    {
+        child->updatePath(elapsedSimulatedDays, _modelViewMatrix);
+    }
 }
 
 void Planet::addPathPoint(){
+    // KORRIGIERT: Diese Funktion ist NICHT MEHR REKURSIV
     _path->addPosition(glm::vec3(_modelViewMatrix * glm::vec4(0,0,0,1)));
-    for(auto child : _children)
-        child->addPathPoint();
 }
 
 void Planet::createPath(){
     _path->recreate();
+    // Diese Funktion ist weiterhin rekursiv
     for(auto child : _children)
         child->createPath();
 }

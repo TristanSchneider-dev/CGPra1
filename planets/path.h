@@ -1,7 +1,9 @@
 #ifndef PATH_H
 #define PATH_H
 
-#include "planets/orbit.h"
+#include "planets/drawable.h" // Geändert von orbit.h zu drawable.h
+#include <vector>             // Hinzugefügt
+#include <glm/vec3.hpp>       // Hinzugefügt
 
 /**
  * @brief The Path class describes the absolute path a planet follows
@@ -38,9 +40,6 @@ public:
 
 protected:
 
-    // Hint: All paths (probably) use the same model view matrix.
-    // You could use a static variable.
-
     /**
      * @see Drawable::getVertexShader()
      */
@@ -50,6 +49,10 @@ protected:
      * @see Drawable::getFragmentShader()
      */
     virtual std::string getFragmentShader() const override;
+
+    // NEUE MEMBER-VARIABLEN
+    std::vector<glm::vec3> _positions; /**< Speichert alle Punkte des Pfades */
+    unsigned int _vertexCount = 0;     /**< Anzahl der Vertices, die gezeichnet werden sollen */
 };
 
 #endif // PATH_H
