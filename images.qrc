@@ -18,9 +18,6 @@
     </qresource>
 
     <qresource prefix="/shader">
-        <file alias="cube.fs.glsl">shader/cube.fs.glsl</file>
-        <file alias="cube.vs.glsl">shader/cube.vs.glsl</file>
-
         <file alias="skybox.fs.glsl">shader/skybox.fs.glsl</file>
         <file alias="skybox.vs.glsl">shader/skybox.vs.glsl</file>
 

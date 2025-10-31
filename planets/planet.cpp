@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <iostream>
 #include <stack>
+#include <vector> // Hinzugefügt für die Geometrieerstellung
 
 #include "glbase/gltool.hpp"
 
@@ -82,7 +83,8 @@ void Planet::draw(glm::mat4 projection_matrix) const
     glUniformMatrix4fv(glGetUniformLocation(_program, "modelview_matrix"), 1, GL_FALSE, glm::value_ptr(_modelViewMatrix));
 
     // call draw
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+    // Die feste '36' wurde durch _indexCount ersetzt
+    glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, 0);
 
     // unbin vertex array object
     glBindVertexArray(0);
@@ -137,77 +139,65 @@ void Planet::addChild(std::shared_ptr<Planet> child)
 
 void Planet::createObject(){
 
-    /// TODO replace with your code
+    // Auflösung der Kugel (kann angepasst werden)
+    // Um die Anforderung "Auflösung pro Objekt angepasst" zu erfüllen,
+    // könnte man diese Werte auch als Member der Klasse (im Konstruktor gesetzt) definieren.
+    unsigned int latitudeSegments = 30;
+    unsigned int longitudeSegments = 30;
 
     std::vector<glm::vec3> positions;
+    std::vector<glm::vec3> normals;
+    std::vector<glm::vec2> texCoords;
     std::vector<unsigned int> indices;
 
-    // positions (corners of the cube)
-    // https://homepages.thm.de/~hg10013/Lehre/MMS/SS02/Deseyve/Images/indwur.gif
-    positions.push_back(glm::vec3(-1,-1,-1)); // 0 -> 0
-    positions.push_back(glm::vec3(-1,-1, 1)); // 1 -> 1
-    positions.push_back(glm::vec3( 1,-1,-1)); // 4 -> 2
-    positions.push_back(glm::vec3( 1,-1, 1)); // 5 -> 3
-    positions.push_back(glm::vec3( 1, 1,-1)); // 6 -> 4
-    positions.push_back(glm::vec3( 1, 1, 1)); // 7 -> 5
-    positions.push_back(glm::vec3(-1, 1,-1)); // 2 -> 6
-    positions.push_back(glm::vec3(-1, 1, 1)); // 3 -> 7
+    for (unsigned int i = 0; i <= latitudeSegments; ++i)
+    {
+        float v = (float)i / latitudeSegments; // 0.0 (Südpol) bis 1.0 (Nordpol)
+        float latitudeAngle = glm::radians(-90.0f + v * 180.0f); // -90 bis +90 Grad
 
-    // indices (two triangles for each side of the cube)
-    // front
-    indices.push_back(0);
-    indices.push_back(1);
-    indices.push_back(2);
+        for (unsigned int j = 0; j <= longitudeSegments; ++j)
+        {
+            float u = (float)j / longitudeSegments; // 0.0 bis 1.0
+            float longitudeAngle = glm::radians(u * 360.0f); // 0 bis 360 Grad
 
-    indices.push_back(2);
-    indices.push_back(1);
-    indices.push_back(3);
+            // Position (Y ist oben)
+            float x = _radius * cos(latitudeAngle) * cos(longitudeAngle);
+            float y = _radius * sin(latitudeAngle);
+            float z = _radius * cos(latitudeAngle) * sin(longitudeAngle);
+            positions.push_back(glm::vec3(x, y, z));
 
-    // back
-    indices.push_back(4);
-    indices.push_back(5);
-    indices.push_back(6);
+            // Normale (für Kugel am Ursprung = normalisierter Positionsvektor)
+            normals.push_back(glm::normalize(glm::vec3(x, y, z)));
 
-    indices.push_back(6);
-    indices.push_back(5);
-    indices.push_back(7);
+            // Texturkoordinaten
+            texCoords.push_back(glm::vec2(u, 1.0f - v)); // 1.0f - v, da Texturen oft oben links starten
+        }
+    }
 
-    // left
-    indices.push_back(6);
-    indices.push_back(7);
-    indices.push_back(0);
+    // Indizes für die Dreiecke (Grid aus Quads)
+    for (unsigned int i = 0; i < latitudeSegments; ++i)
+    {
+        for (unsigned int j = 0; j < longitudeSegments; ++j)
+        {
+            unsigned int v1 = (i * (longitudeSegments + 1)) + j;
+            unsigned int v2 = v1 + 1;
+            unsigned int v3 = ((i + 1) * (longitudeSegments + 1)) + j;
+            unsigned int v4 = v3 + 1;
 
-    indices.push_back(0);
-    indices.push_back(7);
-    indices.push_back(1);
+            // Erstes Dreieck
+            indices.push_back(v1);
+            indices.push_back(v3);
+            indices.push_back(v2);
 
-    // right
-    indices.push_back(2);
-    indices.push_back(3);
-    indices.push_back(4);
+            // Zweites Dreieck
+            indices.push_back(v2);
+            indices.push_back(v3);
+            indices.push_back(v4);
+        }
+    }
 
-    indices.push_back(4);
-    indices.push_back(3);
-    indices.push_back(5);
-
-    // top
-    indices.push_back(1);
-    indices.push_back(7);
-    indices.push_back(3);
-
-    indices.push_back(3);
-    indices.push_back(7);
-    indices.push_back(5);
-
-    // bottom
-    indices.push_back(0);
-    indices.push_back(2);
-    indices.push_back(6);
-
-    indices.push_back(2);
-    indices.push_back(4);
-    indices.push_back(6);
-
+    // Annahme: _indexCount ist Teil der Basisklasse Drawable
+    _indexCount = static_cast<unsigned int>(indices.size());
 
 
     // Set up a vertex array object for the geometry
@@ -219,12 +209,27 @@ void Planet::createObject(){
     GLuint position_buffer;
     glGenBuffers(1, &position_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, position_buffer);
-    glBufferData(GL_ARRAY_BUFFER, positions.size() * 3 * sizeof(float), positions.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(glm::vec3), positions.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0); // layout (location = 0)
     glEnableVertexAttribArray(0);
 
-    // Hint: the texture coordinates buffer is missing
+    // Normalen-Buffer
+    GLuint normal_buffer;
+    glGenBuffers(1, &normal_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0); // layout (location = 1)
+    glEnableVertexAttribArray(1);
 
+    // Texturkoordinaten-Buffer
+    GLuint texcoord_buffer;
+    glGenBuffers(1, &texcoord_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, texcoord_buffer);
+    glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(glm::vec2), texCoords.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0); // layout (location = 2)
+    glEnableVertexAttribArray(2);
+
+    // Index-Buffer
     GLuint index_buffer;
     glGenBuffers(1, &index_buffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
@@ -232,26 +237,31 @@ void Planet::createObject(){
 
     // unbind vertex array object
     glBindVertexArray(0);
-    // delete buffers (the data is stored in the vertex array object)
-   // glDeleteBuffers(1, &position_buffer);
-   // glDeleteBuffers(1, &index_buffer);
+
+    // Buffer können gelöscht werden, da sie im VAO "gespeichert" sind
+    // (Die Kommentare im Originalcode wurden beibehalten)
+    // glDeleteBuffers(1, &position_buffer);
+    // glDeleteBuffers(1, &normal_buffer);
+    // glDeleteBuffers(1, &texcoord_buffer);
+    // glDeleteBuffers(1, &index_buffer);
 
     // check for errors
     VERIFY(CG::checkError());
-
-    // Hint: save the number of vertices for drawing
-
 }
 
 std::string Planet::getVertexShader() const
 {
-    return Drawable::loadShaderFile(":/shader/cube.vs.glsl");
+    // Diese Shader müssen ggf. angepasst werden, um Normalen (loc 1)
+    // und Texturkoordinaten (loc 2) zu verarbeiten.
+    return Drawable::loadShaderFile(":/shader/phong.vs.glsl");
 
 }
 
 std::string Planet::getFragmentShader() const
 {
-    return Drawable::loadShaderFile(":/shader/cube.fs.glsl");
+    // Diese Shader müssen ggf. angepasst werden, um Normalen
+    // und Texturkoordinaten zu verarbeiten (z.B. für Beleuchtung).
+    return Drawable::loadShaderFile(":/shader/phong.fs.glsl");
 }
 
 Planet::~Planet(){
@@ -311,6 +321,3 @@ void Planet::createPath(){
     for(auto child : _children)
         child->createPath();
 }
-
-
-

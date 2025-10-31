@@ -44,6 +44,7 @@ protected:
     virtual void createObject() override;
 
     float _radius;       /**< The radius of the orbit */
+    unsigned int _indexCount = 0; /**< Number of indices for drawing */
 };
 
 #endif // ORBIT_H

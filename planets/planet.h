@@ -84,6 +84,8 @@ protected:
     float _localRotation;       /**< the current local roation */
     float _localRotationSpeed;  /**< the speed at which the planet spins */
 
+    unsigned int _indexCount = 0; /**< Number of indices for drawing the object */
+
     std::shared_ptr<Orbit> _orbit;  /**< the local orbit of this planet */
     std::shared_ptr<Path> _path;    /**< the global path of this orbit */
 

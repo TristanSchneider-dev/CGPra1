@@ -74,7 +74,8 @@ protected:
     glm::vec3 _position;    /**< current position in model view space */
     glm::vec3 _direction;   /**< direction in model view space */
 
-    unsigned int _numVertices; /**< stores the number of vertices used by the cone */
+    // Ersetzt _numVertices durch _indexCount für Konsistenz mit Planet/Orbit
+    unsigned int _indexCount = 0; /**< stores the number of indices used by the cone */
 };
 
 #endif // CONE_H
