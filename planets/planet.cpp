@@ -163,7 +163,8 @@ void Planet::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
     float elapsedSimulatedDays = (elapsedTimeMs / 60000.0f) * Config::animationSpeed;
 
     // 1. Globale Rotation (Orbit) berechnen
-    _globalRotation += elapsedSimulatedDays * _globalRotationSpeed;
+    if (Config::GlobalRotation)
+        _globalRotation += elapsedSimulatedDays * _globalRotationSpeed;
     while(_globalRotation >= 360.f) _globalRotation -= 360.0f;
     while(_globalRotation < 0.0f) _globalRotation += 360.0f;
 

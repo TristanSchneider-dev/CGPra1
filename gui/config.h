@@ -15,6 +15,7 @@ public:
     static float animationSpeed;    /**< the number of steps per ms */
 
     static bool localRotation;      /**< rotate the planets locally */
+    static bool GlobalRotation;     /**< rotate the planets globally */
     static bool sunLight;           /**< turn sunlight on or off    */
     static bool showWireframe;      /**< turn Wireframe on or off   */
     static bool showOrbits;         /**< show Orbit                 */

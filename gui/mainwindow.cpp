@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this->ui->checkBoxSunLight, SIGNAL(clicked(bool)), this, SLOT(setSunLight(bool)));
     connect(this->ui->checkBoxshowWireframe, SIGNAL(clicked(bool)), this, SLOT(setshowWireframe(bool)));
     connect(this->ui->checkBoxshowOrbits, SIGNAL(clicked(bool)), this, SLOT(setshowOrbits(bool)));
+    connect(this->ui->checkBoxGlobalRotation, SIGNAL(clicked(bool)), this, SLOT(setGlobalRotation(bool)));
 }
 
 MainWindow::~MainWindow()
@@ -36,6 +37,11 @@ void MainWindow::setAnimationSpeed(int value)
 void MainWindow::setLocalRotation(bool value)
 {
     Config::localRotation = value;
+}
+
+void MainWindow::setGlobalRotation(bool value)
+{
+    Config::GlobalRotation = value;
 }
 
 void MainWindow::setSunLight(bool value)

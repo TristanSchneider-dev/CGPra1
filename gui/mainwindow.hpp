@@ -38,6 +38,7 @@ private slots:
 
     void setAnimationSpeed(int value);
     void setLocalRotation(bool value);
+    void setGlobalRotation(bool value);
     void setSunLight(bool value);
     void setshowWireframe(bool value);
     void setshowOrbits(bool value);
