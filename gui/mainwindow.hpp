@@ -39,6 +39,7 @@ private slots:
     void setAnimationSpeed(int value);
     void setLocalRotation(bool value);
     void setSunLight(bool value);
+    void setshowWireframe(bool value);
 
 protected:
     virtual void keyPressEvent(QKeyEvent* event);

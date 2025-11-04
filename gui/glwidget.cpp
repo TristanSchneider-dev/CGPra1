@@ -133,7 +133,10 @@ void GLWidget::paintGL()
                 0.1f, 100.0f);
 
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (Config::showWireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // Normale Objekte zeichnen
     //_coordSystem->draw(projection_matrix);

@@ -16,6 +16,7 @@ public:
 
     static bool localRotation;       /**< rotate the planets locally */
     static bool sunLight; /**< turn sunlight on or off*/
+    static bool showWireframe; /**< turn Wireframe on or off*/
 };
 
 #endif // CONFIG_H

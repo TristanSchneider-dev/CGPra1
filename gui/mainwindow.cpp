@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this->ui->sliderAnimationSpeed, SIGNAL(valueChanged(int)), this, SLOT(setAnimationSpeed(int)));
     connect(this->ui->checkBoxLocalRotation, SIGNAL(clicked(bool)), this, SLOT(setLocalRotation(bool)));
     connect(this->ui->checkBoxSunLight, SIGNAL(clicked(bool)), this, SLOT(setSunLight(bool)));
+    connect(this->ui->checkBoxshowWireframe, SIGNAL(clicked(bool)), this, SLOT(setshowWireframe(bool)));
 }
 
 MainWindow::~MainWindow()
@@ -41,6 +42,10 @@ void MainWindow::setSunLight(bool value)
     Config::sunLight = value;
 }
 
+void MainWindow::setshowWireframe(bool value)
+{
+    Config::showWireframe = value;
+}
 
 /* Qt mouse and keyboard events */
 

@@ -54,6 +54,16 @@ background-color: rgb(0, 0, 0);</string>
 				  </property>
 			  </widget>
 		 </item>
+		 <item>
+			  <widget class="QCheckBox" name="checkBoxshowWireframe">
+				  <property name="text">
+					  <string>Gitternetz</string>
+				  </property>
+				  <property name="checked">
+					  <bool>false</bool>
+				  </property>
+			  </widget>
+		 </item>
        <item>
         <widget class="QCheckBox" name="checkBoxLocalRotation">
          <property name="focusPolicy">
