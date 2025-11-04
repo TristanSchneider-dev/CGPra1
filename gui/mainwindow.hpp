@@ -40,6 +40,8 @@ private slots:
     void setLocalRotation(bool value);
     void setSunLight(bool value);
     void setshowWireframe(bool value);
+    void setshowOrbits(bool value);
+    
 
 protected:
     virtual void keyPressEvent(QKeyEvent* event);

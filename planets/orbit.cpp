@@ -25,8 +25,8 @@ void Orbit::draw(glm::mat4 projection_matrix) const
     // Behoben: Die Variable Config::orbits schien nicht zu existieren.
     // Falls Sie die Orbits global an/ausschalten möchten,
     // müssen Sie eine statische bool-Variable 'orbits' in der Config-Klasse hinzufügen.
-    // if (!Config::orbits)
-    //     return;
+    if (!Config::showOrbits)
+        return;
 
     if(_program == 0){
         std::cerr << "Orbit" << _name << "not initialized. Call init() first." << std::endl;

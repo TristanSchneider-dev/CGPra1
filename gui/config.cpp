@@ -9,3 +9,4 @@ float Config::animationSpeed = 1.0f;
 bool Config::localRotation = true;
 bool Config::sunLight = true;
 bool Config::showWireframe = false;
+bool Config::showOrbits = true;

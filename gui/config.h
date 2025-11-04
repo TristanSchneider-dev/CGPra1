@@ -12,11 +12,12 @@
 class Config{
 public:
 
-    static float animationSpeed;     /**< the number of steps per ms */
+    static float animationSpeed;    /**< the number of steps per ms */
 
-    static bool localRotation;       /**< rotate the planets locally */
-    static bool sunLight; /**< turn sunlight on or off*/
-    static bool showWireframe; /**< turn Wireframe on or off*/
+    static bool localRotation;      /**< rotate the planets locally */
+    static bool sunLight;           /**< turn sunlight on or off    */
+    static bool showWireframe;      /**< turn Wireframe on or off   */
+    static bool showOrbits;         /**< show Orbit                 */
 };
 
 #endif // CONFIG_H

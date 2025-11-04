@@ -17,6 +17,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this->ui->checkBoxLocalRotation, SIGNAL(clicked(bool)), this, SLOT(setLocalRotation(bool)));
     connect(this->ui->checkBoxSunLight, SIGNAL(clicked(bool)), this, SLOT(setSunLight(bool)));
     connect(this->ui->checkBoxshowWireframe, SIGNAL(clicked(bool)), this, SLOT(setshowWireframe(bool)));
+    connect(this->ui->checkBoxshowOrbits, SIGNAL(clicked(bool)), this, SLOT(setshowOrbits(bool)));
 }
 
 MainWindow::~MainWindow()
@@ -45,6 +46,11 @@ void MainWindow::setSunLight(bool value)
 void MainWindow::setshowWireframe(bool value)
 {
     Config::showWireframe = value;
+}
+
+void MainWindow::setshowOrbits(bool value)
+{
+    Config::showOrbits = value;
 }
 
 /* Qt mouse and keyboard events */
