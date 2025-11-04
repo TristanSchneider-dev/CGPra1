@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // connect ui elements to slots
     connect(this->ui->sliderAnimationSpeed, SIGNAL(valueChanged(int)), this, SLOT(setAnimationSpeed(int)));
     connect(this->ui->checkBoxLocalRotation, SIGNAL(clicked(bool)), this, SLOT(setLocalRotation(bool)));
+    connect(this->ui->checkBoxSunLight, SIGNAL(clicked(bool)), this, SLOT(setSunLight(bool)));
 }
 
 MainWindow::~MainWindow()
@@ -34,6 +35,12 @@ void MainWindow::setLocalRotation(bool value)
 {
     Config::localRotation = value;
 }
+
+void MainWindow::setSunLight(bool value)
+{
+    Config::sunLight = value;
+}
+
 
 /* Qt mouse and keyboard events */
 

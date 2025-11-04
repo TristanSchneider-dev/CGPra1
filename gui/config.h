@@ -15,6 +15,7 @@ public:
     static float animationSpeed;     /**< the number of steps per ms */
 
     static bool localRotation;       /**< rotate the planets locally */
+    static bool sunLight; /**< turn sunlight on or off*/
 };
 
 #endif // CONFIG_H

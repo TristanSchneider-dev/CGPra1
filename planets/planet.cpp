@@ -127,14 +127,15 @@ void Planet::draw(glm::mat4 projection_matrix) const
     glm::vec3 lightPosView = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Standard-Licht
 
-    if (_sun)
+    if (Config::sunLight && _sun)
     {
-        // Echte Position der Sonne verwenden
         lightPosView = _sun->getPosition();
+        lightColor = glm::vec3(1.0f, 1.0f, 1.0f); // Weißes Licht
     }
 
     glUniform3fv(glGetUniformLocation(_program, "uLightPosView"), 1, glm::value_ptr(lightPosView));
     glUniform3fv(glGetUniformLocation(_program, "uLightColor"), 1, glm::value_ptr(lightColor));
+
 
     // set parameter
     glUniformMatrix4fv(glGetUniformLocation(_program, "projection_matrix"), 1, GL_FALSE, glm::value_ptr(projection_matrix));

@@ -7,4 +7,4 @@
 float Config::animationSpeed = 1.0f;
 
 bool Config::localRotation = true;
-
+bool Config::sunLight = true;
