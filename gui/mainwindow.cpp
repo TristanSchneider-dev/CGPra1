@@ -1,3 +1,5 @@
+// mainwindow.cpp
+
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
 
@@ -19,6 +21,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this->ui->checkBoxshowWireframe, SIGNAL(clicked(bool)), this, SLOT(setshowWireframe(bool)));
     connect(this->ui->checkBoxshowOrbits, SIGNAL(clicked(bool)), this, SLOT(setshowOrbits(bool)));
     connect(this->ui->checkBoxGlobalRotation, SIGNAL(clicked(bool)), this, SLOT(setGlobalRotation(bool)));
+    
+    // Neue Verbindung
+    connect(this->ui->checkBoxCoordinateSystem, SIGNAL(clicked(bool)), this, SLOT(setCoordinateSystem(bool)));
 }
 
 MainWindow::~MainWindow()
@@ -59,6 +64,13 @@ void MainWindow::setshowOrbits(bool value)
     Config::showOrbits = value;
 }
 
+// Neue Slot-Implementierung
+void MainWindow::setCoordinateSystem(bool value)
+{
+    Config::showCoordinateSystem = value;
+}
+
+
 /* Qt mouse and keyboard events */
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
@@ -78,5 +90,3 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
         break;
     }
 }
-
-

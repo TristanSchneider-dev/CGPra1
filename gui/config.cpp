@@ -11,3 +11,4 @@ bool Config::GlobalRotation = true;
 bool Config::sunLight = true;
 bool Config::showWireframe = false;
 bool Config::showOrbits = true;
+bool Config::showCoordinateSystem = false;

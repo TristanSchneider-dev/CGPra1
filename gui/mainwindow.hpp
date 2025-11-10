@@ -42,6 +42,7 @@ private slots:
     void setSunLight(bool value);
     void setshowWireframe(bool value);
     void setshowOrbits(bool value);
+    void setCoordinateSystem(bool value);
     
 
 protected:

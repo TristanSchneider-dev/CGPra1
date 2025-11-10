@@ -19,6 +19,7 @@ public:
     static bool sunLight;           /**< turn sunlight on or off    */
     static bool showWireframe;      /**< turn Wireframe on or off   */
     static bool showOrbits;         /**< show Orbit                 */
+    static bool showCoordinateSystem;
 };
 
 #endif // CONFIG_H
