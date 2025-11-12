@@ -13,7 +13,9 @@ public:
               float distance = 10.0f,
               float hoursPerDay = 24.0f,
               float daysPerYear = 365.0f,
-              std::string textureLocation = ":/res/images/moon.bmp");
+              std::string textureLocation = ":/res/images/moon.bmp",
+              float startAngle = 0.0f,    // NEU
+              float inclination = 0.0f); // NEU
 
     /**
      * @see Drawable::init()

@@ -13,7 +13,9 @@ public:
         float distance = 1.f,
         float hoursPerDay = 250.f,
         float daysPerYear = 365.f,
-        std::string textureLocation = ":/res/images/sun.bmp");
+        std::string textureLocation = ":/res/images/sun.bmp",
+        float startAngle = 0.0f,    // NEU
+        float inclination = 0.0f); // NEU
 
     /**
      * @brief getPosition Getter for the position

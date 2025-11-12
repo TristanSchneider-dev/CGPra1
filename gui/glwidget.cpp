@@ -8,6 +8,9 @@
 #include <iostream>
 #include <GL/glew.h>
 
+#include <cstdlib> // NEU: Für rand()
+#include <ctime>   // NEU: Für time()
+
 #include "glwidget.hpp"
 
 #include <QMouseEvent>
@@ -26,13 +29,21 @@
 #include "planets/sun.h"
 #include "planets/skybox.h"
 
-GLWidget::GLWidget(QWidget *&parent) : QOpenGLWidget(parent),//static_cast<QWidget*>(0)),
+// Kleine Helferfunktion für Zufallswinkel
+static float randAngle() {
+    return static_cast<float>(rand() % 360);
+}
+
+GLWidget::GLWidget(QWidget *&parent) : QOpenGLWidget(parent),
     _updateTimer(this), _stopWatch()
 {
     // update the scene periodically
     QObject::connect(&_updateTimer, SIGNAL(timeout()), this, SLOT(animateGL()));
     _updateTimer.start(18);
     _stopWatch.start();
+
+    // NEU: Zufallsgenerator initialisieren
+    srand(static_cast<unsigned int>(time(NULL)));
 
 
     // create all drawable elements
@@ -42,24 +53,25 @@ GLWidget::GLWidget(QWidget *&parent) : QOpenGLWidget(parent),//static_cast<QWidg
     /***************************
      * DO NOT CHANGE days/year *
      * *************************/
-                                                        // radius, distance, h/day, days/year
-    _earth          = std::make_shared<Planet> ("Erde",     1.0,    0.0,    24.0,   1, ":/res/images/earth.bmp");
-    auto moon       = std::make_shared<Planet>("Mond",      0.215,  2.0,    27.3,   27, ":/res/images/moon.bmp");
-    auto sun        = std::make_shared<Sun>("Sonne",        1.2,    6.0,    50.0,   350, ":/res/images/sun.bmp");
-    auto mercury    = std::make_shared<Planet>("Merkur",    0.34,   2.32,   1407.5, 150, ":/res/images/mercury.bmp");
-    auto venus      = std::make_shared<Planet>("Venus",     0.34,   3.0,    2802.0, 100, ":/res/images/venus.bmp");
+                                                        // radius, distance, h/day, days/year, texture, startAngle, inclination
+    _earth          = std::make_shared<Planet> ("Erde",     1.0,    0.0,    24.0,   1, ":/res/images/earth.bmp", 0.0f, 0.0f);
+    auto moon       = std::make_shared<Planet>("Mond",      0.215,  2.0,    27.3,   27, ":/res/images/moon.bmp", randAngle(), 5.1f);
+    auto sun        = std::make_shared<Sun>("Sonne",        1.2,    6.0,    50.0,   350, ":/res/images/sun.bmp", randAngle(), 7.25f); // 7.25 (Ekliptikneigung d. Sonne)
 
-    auto mars       = std::make_shared<Planet>("Mars",      0.453,  10.6,   24.7,   700, ":/res/images/mars.bmp");
-    auto jupiter    = std::make_shared<Planet>("Jupiter",   0.453,  13.32,  9.9,    3500, ":/res/images/jupiter.bmp");
-    auto saturn     = std::make_shared<Planet>("Saturn",    0.453,  15.92,  10.6,   10500, ":/res/images/saturn.bmp");
+    // Planeten, die die Sonne umkreisen (im Tychonischen System)
+    auto mercury    = std::make_shared<Planet>("Merkur",    0.34,   2.32,   1407.5, 150, ":/res/images/mercury.bmp", randAngle(), 7.0f);
+    auto venus      = std::make_shared<Planet>("Venus",     0.34,   3.0,    2802.0, 100, ":/res/images/venus.bmp", randAngle(), 3.4f);
+    auto mars       = std::make_shared<Planet>("Mars",      0.453,  10.6,   24.7,   700, ":/res/images/mars.bmp", randAngle(), 1.85f);
+    auto jupiter    = std::make_shared<Planet>("Jupiter",   0.453,  13.32,  9.9,    3500, ":/res/images/jupiter.bmp", randAngle(), 1.3f);
+    auto saturn     = std::make_shared<Planet>("Saturn",    0.453,  15.92,  10.6,   10500, ":/res/images/saturn.bmp", randAngle(), 2.5f);
 
     // jupiter moons
-    auto io         = std::make_shared<Planet>("Io",        0.036,  0.8,    10.6,   30, ":/res/images/moon.bmp");
-    auto europa     = std::make_shared<Planet>("Europa",    0.031,  1.0,    10.6,   60, ":/res/images/moon.bmp");
-    auto ganymede   = std::make_shared<Planet>("Ganymed",   0.052,  1.2,    10.6,   120, ":/res/images/moon.bmp");
-    auto callisto   = std::make_shared<Planet>("Callisto",  0.048,  1.8,    10.6,   350, ":/res/images/moon.bmp");
+    auto io         = std::make_shared<Planet>("Io",        0.036,  0.8,    10.6,   30, ":/res/images/moon.bmp", randAngle(), 0.04f);
+    auto europa     = std::make_shared<Planet>("Europa",    0.031,  1.0,    10.6,   60, ":/res/images/moon.bmp", randAngle(), 0.47f);
+    auto ganymede   = std::make_shared<Planet>("Ganymed",   0.052,  1.2,    10.6,   120, ":/res/images/moon.bmp", randAngle(), 0.2f);
+    auto callisto   = std::make_shared<Planet>("Callisto",  0.048,  1.8,    10.6,   350, ":/res/images/moon.bmp", randAngle(), 0.2f);
 
-    auto deathStar  = std::make_shared<DeathStar>("Todesstern", 0.315,  2.0,    27.3,    50, ":/res/images/moon.bmp");
+    auto deathStar  = std::make_shared<DeathStar>("Todesstern", 0.315,  2.0,    27.3,    50, ":/res/images/moon.bmp", randAngle(), 2.0f);
 
     // create hierarchy
     _earth->addChild(moon);

@@ -1,11 +1,14 @@
-#version 330 core
-out vec4 FragColor;
+#version 400 core
 
-// Empfängt die Farbe vom Vertex Shader
-in vec3 vColor;
+// Das 'out' (Ausgabe) für die finale Farbe
+out vec4 outColor;
+
+// Das 'in' (Eingabe), das wir von orbit.cpp setzen
+uniform vec3 uColor;
 
 void main()
 {
-    // Gib einfach die interpolierte Farbe aus
-    FragColor = vec4(vColor, 1.0);
+    // Setze die Ausgabe-Farbe auf die, die wir per Uniform erhalten
+    // (Alpha-Wert auf 1.0 für "sichtbar")
+    outColor = vec4(uColor, 1.0);
 }

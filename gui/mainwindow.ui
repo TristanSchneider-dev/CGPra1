@@ -64,7 +64,6 @@
                                     </property>
                                 </widget>
                             </item>
-
                             <item>
                                 <widget class="QCheckBox" name="checkBoxCoordinateSystem">
                                     <property name="text">
@@ -105,6 +104,16 @@
                                 <widget class="QCheckBox" name="checkBoxshowOrbits">
                                     <property name="text">
                                         <string>Umlaufbahnen</string>
+                                    </property>
+                                    <property name="checked">
+                                        <bool>true</bool>
+                                    </property>
+                                </widget>
+                            </item>
+                            <item>
+                                <widget class="QCheckBox" name="checkBox3DOrbits">
+                                    <property name="text">
+                                        <string>3D Umlaufbahnen</string>
                                     </property>
                                     <property name="checked">
                                         <bool>true</bool>

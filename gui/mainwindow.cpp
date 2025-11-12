@@ -21,9 +21,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this->ui->checkBoxshowWireframe, SIGNAL(clicked(bool)), this, SLOT(setshowWireframe(bool)));
     connect(this->ui->checkBoxshowOrbits, SIGNAL(clicked(bool)), this, SLOT(setshowOrbits(bool)));
     connect(this->ui->checkBoxGlobalRotation, SIGNAL(clicked(bool)), this, SLOT(setGlobalRotation(bool)));
-    
-    // Neue Verbindung
     connect(this->ui->checkBoxCoordinateSystem, SIGNAL(clicked(bool)), this, SLOT(setCoordinateSystem(bool)));
+
+    // --- NEU HINZUGEFÜGT ---
+    connect(this->ui->checkBox3DOrbits, SIGNAL(clicked(bool)), this, SLOT(set3DOrbits(bool)));
 }
 
 MainWindow::~MainWindow()
@@ -64,10 +65,15 @@ void MainWindow::setshowOrbits(bool value)
     Config::showOrbits = value;
 }
 
-// Neue Slot-Implementierung
 void MainWindow::setCoordinateSystem(bool value)
 {
     Config::showCoordinateSystem = value;
+}
+
+// --- NEU HINZUGEFÜGT ---
+void MainWindow::set3DOrbits(bool value)
+{
+    Config::show3DOrbits = value;
 }
 
 

@@ -5,8 +5,10 @@
 #include <glm/gtc/type_ptr.hpp> // Für glm::vec4
 #include "glbase/gltool.hpp"
 
-Sun::Sun(std::string name, float radius, float distance, float hoursPerDay, float daysPerYear, std::string textureLocation):
-    Planet(name, radius, distance, hoursPerDay, daysPerYear, textureLocation)
+Sun::Sun(std::string name, float radius, float distance, float hoursPerDay, float daysPerYear, std::string textureLocation,
+         float startAngle, float inclination): // NEUE Parameter
+    Planet(name, radius, distance, hoursPerDay, daysPerYear, textureLocation,
+           startAngle, inclination) // NEU: Weiterleitung an die Basisklasse
 {
     // Da die Sonne ein Planet ist, wird createObject(), init() etc.
     // automatisch von der Planet-Klasse aufgerufen.

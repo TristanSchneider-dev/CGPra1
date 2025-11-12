@@ -5,7 +5,7 @@
 
 // add to namespace Ui
 namespace Ui {
-class MainWindow;
+    class MainWindow;
 }
 
 /**
@@ -43,7 +43,10 @@ private slots:
     void setshowWireframe(bool value);
     void setshowOrbits(bool value);
     void setCoordinateSystem(bool value);
-    
+
+    // --- NEU HINZUGEFÜGT ---
+    void set3DOrbits(bool value);
+
 
 protected:
     virtual void keyPressEvent(QKeyEvent* event);

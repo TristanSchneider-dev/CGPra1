@@ -1,26 +1,23 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-/**
- * @brief The global configuration
- *
- * This class contains global configuration parameters
- * that are used all over the program.
- *
- * Hint: Add as many parameters as you need.
+/*
+ * Diese Datei (oder ein Namespace) deklariert globale Konfigurationsvariablen,
+ * die von der GUI (MainWindow) gesetzt und von der Logik (Planet, Orbit) gelesen werden.
  */
-class Config{
-public:
 
-    static float animationSpeed;    /**< the number of steps per ms */
+namespace Config {
+    // Vorhandene Variablen (basierend auf deinen Dateien)
+    extern float animationSpeed;
+    extern bool localRotation;
+    extern bool GlobalRotation; // In mainwindow.cpp so genannt
+    extern bool sunLight;
+    extern bool showWireframe;
+    extern bool showOrbits;
+    extern bool showCoordinateSystem;
 
-    static bool localRotation;      /**< rotate the planets locally */
-    static bool GlobalRotation;     /**< rotate the planets globally */
-    static bool sunLight;           /**< turn sunlight on or off    */
-    static bool showWireframe;      /**< turn Wireframe on or off   */
-    static bool showOrbits;         /**< show Orbit                 */
-    static bool showCoordinateSystem;
-};
+    // --- NEU HINZUGEFÜGT ---
+    extern bool show3DOrbits;
+}
 
 #endif // CONFIG_H
-
