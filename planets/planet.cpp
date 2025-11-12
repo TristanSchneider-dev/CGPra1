@@ -1,5 +1,6 @@
 #include <GL/glew.h>
 #include "planet.h"
+#include <stack>
 
 
 #define GLM_FORCE_RADIANS
@@ -130,11 +131,7 @@ void Planet::draw(glm::mat4 projection_matrix) const
 
 void Planet::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 {
-    // --- KORRIGIERTE UPDATE-LOGIK ---
-
     // 1. Definiere EINE Basis-Matrix, die die 3D-Orbit-Einstellung berücksichtigt.
-    //    Diese Matrix legt die Ebene fest, auf der *sowohl* die Linie
-    //    gezeichnet *als auch* der Planet bewegt wird.
     glm::mat4 baseOperatingMatrix;
 
     if (Config::show3DOrbits)
@@ -149,31 +146,34 @@ void Planet::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
     }
 
     // 2. Update Orbit/Pfad
-    //    Der Orbit (_orbit) nutzt jetzt die gesteuerte Matrix (flach oder 3D)
     _orbit->update(elapsedTimeMs, baseOperatingMatrix);
-
-    //    Der Pfad (_path) ist die aufgezeichnete *echte* Spur und sollte
-    //    immer die 3D-Daten nutzen (gesteuert durch updatePath).
     _path->update(elapsedTimeMs, modelViewMatrix);
 
     // 3. Berechne die vergangene Zeit
     float elapsedSimulatedDays = (elapsedTimeMs / 60000.0f) * Config::animationSpeed;
 
-    // 4. Rotationen berechnen (bleibt gleich)
+    // 4. Rotationen berechnen
+    //    ========================================================
+    //    HIER WERDEN DIE BUTTONS GELESEN
+    //    ========================================================
     if (Config::GlobalRotation)
         _globalRotation += elapsedSimulatedDays * _globalRotationSpeed;
+
     while(_globalRotation >= 360.f) _globalRotation -= 360.0f;
     while(_globalRotation < 0.0f) _globalRotation += 360.0f;
 
     if(Config::localRotation)
         _localRotation += elapsedSimulatedDays * _localRotationSpeed;
+
     while(_localRotation >= 360.f) _localRotation -= 360.0f;
     while(_localRotation < 0.0f) _localRotation += 360.0f;
+    //    ========================================================
+    //    ENDE DER BUTTON-LOGIK
+    //    ========================================================
 
     // 5. Eigene ModelView-Matrix berechnen
-    //    WICHTIG: Starte von der NEUEN 'baseOperatingMatrix'
     std::stack<glm::mat4> modelview_stack;
-    modelview_stack.push(baseOperatingMatrix); // <-- HIER IST DIE KORREKTUR
+    modelview_stack.push(baseOperatingMatrix); // Starte von der gesteuerten Matrix
 
         // 1. Rotiere um den Parent (z.B. Sonne) auf der Y-Achse
         modelview_stack.top() = glm::rotate(modelview_stack.top(), glm::radians(_globalRotation), glm::vec3(0,1,0));
@@ -187,9 +187,6 @@ void Planet::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
     modelview_stack.pop();
 
     // 6. REKURSION: Kinder updaten
-    //    Passe die *neue, finale* Matrix an die Kinder weiter.
-    //    Da _modelViewMatrix jetzt auf baseOperatingMatrix basiert,
-    //    ist dies automatisch korrekt (flach oder 3D).
     for (const auto& child : _children)
     {
         child->update(elapsedTimeMs, _modelViewMatrix);

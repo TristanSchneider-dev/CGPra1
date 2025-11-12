@@ -1,20 +1,14 @@
-// mainwindow.cpp
-
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
-
 #include <QKeyEvent>
-
 #include "gui/config.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    // setup ui elements
     ui->setupUi(this);
 
-    // connect ui elements to slots
     connect(this->ui->sliderAnimationSpeed, SIGNAL(valueChanged(int)), this, SLOT(setAnimationSpeed(int)));
     connect(this->ui->checkBoxLocalRotation, SIGNAL(clicked(bool)), this, SLOT(setLocalRotation(bool)));
     connect(this->ui->checkBoxSunLight, SIGNAL(clicked(bool)), this, SLOT(setSunLight(bool)));
@@ -22,16 +16,17 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this->ui->checkBoxshowOrbits, SIGNAL(clicked(bool)), this, SLOT(setshowOrbits(bool)));
     connect(this->ui->checkBoxGlobalRotation, SIGNAL(clicked(bool)), this, SLOT(setGlobalRotation(bool)));
     connect(this->ui->checkBoxCoordinateSystem, SIGNAL(clicked(bool)), this, SLOT(setCoordinateSystem(bool)));
-
-    // --- NEU HINZUGEFÜGT ---
     connect(this->ui->checkBox3DOrbits, SIGNAL(clicked(bool)), this, SLOT(set3DOrbits(bool)));
+
+    // --- NEU HINZUFÜGEN ---
+    // (Vorausgesetzt, du nennst die neue Checkbox im Designer 'checkBoxLocalOrbits')
+    connect(this->ui->checkBoxLocalOrbits, SIGNAL(clicked(bool)), this, SLOT(setLocalOrbits(bool)));
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
 }
-
 
 void MainWindow::setAnimationSpeed(int value)
 {
@@ -70,18 +65,20 @@ void MainWindow::setCoordinateSystem(bool value)
     Config::showCoordinateSystem = value;
 }
 
-// --- NEU HINZUGEFÜGT ---
 void MainWindow::set3DOrbits(bool value)
 {
     Config::show3DOrbits = value;
 }
 
+// --- NEU HINZUFÜGEN ---
+void MainWindow::setLocalOrbits(bool value)
+{
+    Config::localOrbits = value;
+}
 
 /* Qt mouse and keyboard events */
-
 void MainWindow::keyPressEvent(QKeyEvent* event)
 {
-    // enable control via keyboard
     switch (event->key()) {
     case Qt::Key_F:
         if (isFullScreen()) {

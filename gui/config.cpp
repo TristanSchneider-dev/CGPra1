@@ -16,3 +16,4 @@ bool Config::showCoordinateSystem = false;
 // --- NEU HINZUGEFÜGT ---
 // Standardmäßig die korrekten 3D-Bahnen anzeigen
 bool Config::show3DOrbits = true;
+bool Config::localOrbits = true;

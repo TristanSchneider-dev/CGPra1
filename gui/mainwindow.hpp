@@ -3,39 +3,22 @@
 
 #include <QMainWindow>
 
-// add to namespace Ui
 namespace Ui {
     class MainWindow;
 }
 
-/**
- * @brief The MainWindow class
- *
- * This class handles the QMainWindow that is defined
- * in the mainwindow.ui
- */
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    /**
-     * @brief MainWindow constructor
-     * @param parent the parent widget
-     */
     explicit MainWindow(QWidget *parent = 0);
-
     ~MainWindow();
 
 private:
-    Ui::MainWindow *ui; /**< references all ui elements */
+    Ui::MainWindow *ui;
 
 private slots:
-
-    /*
-     * Define slots to connect the ui elements with
-     */
-
     void setAnimationSpeed(int value);
     void setLocalRotation(bool value);
     void setGlobalRotation(bool value);
@@ -43,9 +26,10 @@ private slots:
     void setshowWireframe(bool value);
     void setshowOrbits(bool value);
     void setCoordinateSystem(bool value);
-
-    // --- NEU HINZUGEFÜGT ---
     void set3DOrbits(bool value);
+
+    // --- NEU HINZUFÜGEN ---
+    void setLocalOrbits(bool value);
 
 
 protected:
