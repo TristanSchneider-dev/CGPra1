@@ -136,7 +136,12 @@ public:
     virtual void wheelEvent(QWheelEvent *event) override;
 
 public slots:
-
+    // --- NEU HINZUGEFÜGT ---
+    /**
+     * @brief setPolygonResolution Empfängt das Signal vom MainWindow
+     * @param segments Die neue Auflösungsstufe (3 bis 100)
+     */
+    void setPolygonResolution(int segments);
 
 };
 

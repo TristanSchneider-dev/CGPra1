@@ -13,22 +13,36 @@
 Drawable::Drawable(std::string name):
     _name(name),
     _program(0),
+    _modelViewMatrix(glm::mat4(1.0f)),
+    _resolutionSegments(60), // Standard-Auflösung
+    // --- NEU: Buffer initialisieren ---
     _vertexArrayObject(0),
-    _modelViewMatrix(glm::mat4(1.0f)) // Initialisieren
+    _positionBuffer(0),
+    _normalBuffer(0),
+    _texCoordBuffer(0),
+    _indexBuffer(0)
 {
 }
 
 void Drawable::init()
 {
-    // Lade Shader und erstelle das Objekt
     initShader();
     createObject();
 }
 
 void Drawable::recreate()
 {
-    // Erstelle das Objekt neu (z.B. wenn sich Parameter ändern)
     createObject();
+}
+
+void Drawable::setResolution(unsigned int segments)
+{
+    if (segments < 3)
+        _resolutionSegments = 3;
+    else
+        _resolutionSegments = segments;
+
+    recreate();
 }
 
 // --- KOMPLETT NEUE initShader() FUNKTION ---

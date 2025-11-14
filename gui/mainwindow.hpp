@@ -27,9 +27,10 @@ private slots:
     void setshowOrbits(bool value);
     void setCoordinateSystem(bool value);
     void set3DOrbits(bool value);
-
-    // --- NEU HINZUFÜGEN ---
     void setLocalOrbits(bool value);
+
+    // --- NEU HINZUGEFÜGT ---
+    void setPolygonResolution(int value);
 
 
 protected:

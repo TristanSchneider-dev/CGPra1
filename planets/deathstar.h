@@ -26,6 +26,9 @@ public:
     virtual void draw(glm::mat4 projection_matrix) const override;
     std::shared_ptr<Cone> cone() const;
 
+    // --- NEU HINZUGEFÜGT ---
+    virtual void setResolution(unsigned int segments) override;
+
 protected:
     std::shared_ptr<Cone> _cone;
 };

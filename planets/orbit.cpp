@@ -71,86 +71,81 @@ std::string Orbit::getFragmentShader() const
 
 void Orbit::createObject()
 {
-    unsigned int segments = 100;
+    unsigned int segments = _resolutionSegments;
+    if (segments < 3) segments = 3; // Sicherstellen
 
-    float ringWidth = _radius * 0.01f;
+    float ringWidth = 0.02f;
     float innerRadius = _radius - ringWidth;
     float outerRadius = _radius + ringWidth;
+
 
     std::vector<glm::vec3> positions;
     std::vector<glm::vec3> normals;
     std::vector<glm::vec2> texCoords;
     std::vector<unsigned int> indices;
 
+    // ... (Die Logik zum Füllen der Vektoren bleibt exakt gleich) ...
     for (unsigned int i = 0; i < segments; ++i)
     {
         float angle = (float)i / segments * 2.0f * glm::pi<float>();
         float cosA = cos(angle);
         float sinA = sin(angle);
-
         glm::vec3 innerPos = glm::vec3(cosA * innerRadius, 0.0f, sinA * innerRadius);
         glm::vec3 outerPos = glm::vec3(cosA * outerRadius, 0.0f, sinA * outerRadius);
-
         positions.push_back(innerPos);
         positions.push_back(outerPos);
-
         glm::vec3 normal = glm::vec3(0.0f, 1.0f, 0.0f);
         normals.push_back(normal);
         normals.push_back(normal);
-
         texCoords.push_back(glm::vec2((float)i / segments, 0.0f));
         texCoords.push_back(glm::vec2((float)i / segments, 1.0f));
-
         unsigned int i0 = i * 2;
         unsigned int i1 = i * 2 + 1;
         unsigned int i2 = ((i + 1) % segments) * 2;
         unsigned int i3 = ((i + 1) % segments) * 2 + 1;
-
         indices.push_back(i0);
         indices.push_back(i2);
         indices.push_back(i1);
-
         indices.push_back(i1);
         indices.push_back(i2);
         indices.push_back(i3);
     }
+    // ... (Ende der Vektor-Füll-Logik) ...
 
     _indexCount = static_cast<unsigned int>(indices.size());
 
+    // --- NEUE BUFFER-VERWALTUNG ---
     if(_vertexArrayObject == 0)
         glGenVertexArrays(1, &_vertexArrayObject);
     glBindVertexArray(_vertexArrayObject);
 
-    // Position-Buffer (loc 0)
-    GLuint position_buffer;
-    glGenBuffers(1, &position_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, position_buffer);
+    if (_positionBuffer == 0)
+        glGenBuffers(1, &_positionBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _positionBuffer);
     glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(glm::vec3), positions.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-    // Normalen-Buffer (loc 1)
-    GLuint normal_buffer;
-    glGenBuffers(1, &normal_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
+    if (_normalBuffer == 0)
+        glGenBuffers(1, &_normalBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _normalBuffer);
     glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(1);
 
-    // Texturkoordinaten-Buffer (loc 2)
-    GLuint texcoord_buffer;
-    glGenBuffers(1, &texcoord_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, texcoord_buffer);
+    if (_texCoordBuffer == 0)
+        glGenBuffers(1, &_texCoordBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _texCoordBuffer);
     glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(glm::vec2), texCoords.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(2);
 
-    // Index-Buffer
-    GLuint index_buffer;
-    glGenBuffers(1, &index_buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+    if (_indexBuffer == 0)
+        glGenBuffers(1, &_indexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+    // --- ENDE NEUE BUFFER-VERWALTUNG ---
 
     glBindVertexArray(0);
-    VERIFY(CG::checkError());
+    VERIFY(CG::checkError()); // Diese Zeile war 159 und sollte jetzt keinen Fehler mehr melden
 }

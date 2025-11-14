@@ -64,13 +64,29 @@ public:
      */
     virtual void update(float elapsedTimeMs, glm::mat4 modelViewMatrix) = 0;
 
+    /**
+     * @brief setResolution Stellt die Polygon-Auflösung des Objekts ein.
+     * @param segments Die Anzahl der Segmente (z.B. für Breite/Höhe).
+     */
+    virtual void setResolution(unsigned int segments);
+
+
 protected:
 
     std::string _name;  /**< The name of the object */
 
     GLuint _program;            /**< The opengl program handling the shaders */
-    GLuint _vertexArrayObject;  /**< The vertex array object containing the vertices */
     glm::mat4 _modelViewMatrix; /**< The model view matrix to get the object into model view space */
+
+    unsigned int _resolutionSegments; /**< Steuert die Polygon-Auflösung */
+
+    // --- NEUE BUFFER-HANDLES ---
+    GLuint _vertexArrayObject;  /**< The vertex array object containing the vertices */
+    GLuint _positionBuffer;     /**< VBO for positions */
+    GLuint _normalBuffer;       /**< VBO for normals */
+    GLuint _texCoordBuffer;     /**< VBO for texture coordinates */
+    GLuint _indexBuffer;        /**< VBO for indices (Element Array Buffer) */
+
 
     /**
      * @brief initShader Initializes the shader.
@@ -96,7 +112,7 @@ protected:
      * @return the GLuint pointing to the texture
      *
      * Hint: You can use the Qt Resource System for the path
-     * (e.g. ":/res/images/earth.bmp")
+     * (e.G. ":/res/images/earth.bmp")
      */
     virtual GLuint loadTexture(std::string path);
 
@@ -133,4 +149,3 @@ protected:
 
 
 #endif // DRAWABLE_H
-

@@ -242,3 +242,18 @@ void GLWidget::animateGL()
     // update the widget (do not remove this!)
     update();
 }
+
+// --- NEU HINZUGEFÜGT ---
+void GLWidget::setPolygonResolution(int segments)
+{
+    // OpenGL-Kontext für diesen Thread (den UI-Thread) aktivieren!
+    makeCurrent();
+
+    // Leite den Wert an das Wurzelobjekt der Hierarchie weiter.
+    // Die Objekte, die nicht Teil der Hierarchie sind (Skybox, CoordSystem),
+    // sind keine Kugeln, Ringe oder Kegel und benötigen die Einstellung nicht.
+    if (_earth)
+    {
+        _earth->setResolution(static_cast<unsigned int>(segments));
+    }
+}

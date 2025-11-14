@@ -33,6 +33,9 @@ public:
     virtual void addChild(std::shared_ptr<Planet> child);
     virtual void calculatePath(glm::mat4 modelViewMatrix);
 
+    // --- NEU HINZUGEFÜGT ---
+    virtual void setResolution(unsigned int segments) override;
+
     ~Planet();
 
 protected:

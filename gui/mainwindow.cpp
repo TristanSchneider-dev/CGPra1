@@ -17,10 +17,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this->ui->checkBoxGlobalRotation, SIGNAL(clicked(bool)), this, SLOT(setGlobalRotation(bool)));
     connect(this->ui->checkBoxCoordinateSystem, SIGNAL(clicked(bool)), this, SLOT(setCoordinateSystem(bool)));
     connect(this->ui->checkBox3DOrbits, SIGNAL(clicked(bool)), this, SLOT(set3DOrbits(bool)));
-
-    // --- NEU HINZUFÜGEN ---
-    // (Vorausgesetzt, du nennst die neue Checkbox im Designer 'checkBoxLocalOrbits')
     connect(this->ui->checkBoxLocalOrbits, SIGNAL(clicked(bool)), this, SLOT(setLocalOrbits(bool)));
+
+    // --- NEU HINZUGEFÜGT ---
+    connect(this->ui->sliderResolution, SIGNAL(valueChanged(int)), this, SLOT(setPolygonResolution(int)));
 }
 
 MainWindow::~MainWindow()
@@ -33,6 +33,18 @@ void MainWindow::setAnimationSpeed(int value)
     Config::animationSpeed = float(value) / 2.0f;
     QString title = QString("Animation: ") + QString::number(Config::animationSpeed, 'x', 1) + "x";
     this->ui->groupBox_4->setTitle(title);
+}
+
+// --- NEU HINZUGEFÜGT ---
+void MainWindow::setPolygonResolution(int value)
+{
+    // Update den Titel der GroupBox
+    QString title = QString("Auflösung: ") + QString::number(value);
+    this->ui->groupBox_Resolution->setTitle(title);
+
+    // Leite den Wert an das GLWidget weiter
+    // (ui->openGLWidget ist der Name des Widgets aus der .ui Datei)
+    this->ui->openGLWidget->setPolygonResolution(value);
 }
 
 void MainWindow::setLocalRotation(bool value)
@@ -70,7 +82,6 @@ void MainWindow::set3DOrbits(bool value)
     Config::show3DOrbits = value;
 }
 
-// --- NEU HINZUFÜGEN ---
 void MainWindow::setLocalOrbits(bool value)
 {
     Config::localOrbits = value;

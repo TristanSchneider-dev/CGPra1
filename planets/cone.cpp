@@ -83,14 +83,10 @@ std::string Cone::getFragmentShader() const
 
 void Cone::createObject()
 {
-    // Parameter für den Kegel (Laser)
-    // Wir bauen den Kegel mit der Spitze (Apex) bei (0,0,0)
-    // und der Basis auf der positiven Y-Achse
-    float height = 10.0f; // Länge des Lasers
-    float baseRadius = 0.5f; // Radius des Lasers
-    unsigned int segments = 20; // Auflösung
+    float height = 10.0f;
+    float baseRadius = 0.5f;
+    unsigned int segments = _resolutionSegments;
 
-    // Winkel berechnen (wird von getAngle() zurückgegeben)
     _angle = glm::degrees(atan(baseRadius / height));
 
     std::vector<glm::vec3> positions;
@@ -98,55 +94,39 @@ void Cone::createObject()
     std::vector<glm::vec2> texCoords;
     std::vector<unsigned int> indices;
 
-    // Apex (Spitze)
+    // ... (Die Logik zum Füllen der Vektoren bleibt exakt gleich) ...
     unsigned int apexIndex = 0;
     positions.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
-    normals.push_back(glm::vec3(0.0f, -1.0f, 0.0f)); // Normale an der Spitze ist nicht eindeutig
+    normals.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
     texCoords.push_back(glm::vec2(0.5f, 0.5f));
-
-    // Basis-Mittelpunkt
     unsigned int baseCenterIndex = 1;
     positions.push_back(glm::vec3(0.0f, height, 0.0f));
-    normals.push_back(glm::vec3(0.0f, 1.0f, 0.0f)); // Normale der Basis zeigt nach oben
+    normals.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
     texCoords.push_back(glm::vec2(0.5f, 0.5f));
-
     unsigned int currentIndex = 2;
-
-    // Ring-Vertices (Basis und Seite)
     for(unsigned int i = 0; i <= segments; ++i)
     {
         float angle = (float)i / segments * 2.0f * glm::pi<float>();
         float x = cos(angle) * baseRadius;
         float z = sin(angle) * baseRadius;
-
-        // Vertex für die Seite
         positions.push_back(glm::vec3(x, height, z));
-        normals.push_back(glm::normalize(glm::vec3(x, baseRadius, z))); // Normale der Kegelseite
+        normals.push_back(glm::normalize(glm::vec3(x, baseRadius, z)));
         texCoords.push_back(glm::vec2((float)i / segments, 1.0f));
         unsigned int sideIndex = currentIndex++;
-
-        // Vertex für die Basis
         positions.push_back(glm::vec3(x, height, z));
-        normals.push_back(glm::vec3(0.0f, 1.0f, 0.0f)); // Normale der Basis
+        normals.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
         texCoords.push_back(glm::vec2(cos(angle) * 0.5f + 0.5f, sin(angle) * 0.5f + 0.5f));
         unsigned int baseIndex = currentIndex++;
     }
-
-    // Indizes erstellen
     for(unsigned int i = 0; i < segments; ++i)
     {
         unsigned int i0_side = 2 + i * 2;
         unsigned int i1_side = 2 + (i + 1) * 2;
-
         unsigned int i0_base = 2 + i * 2 + 1;
         unsigned int i1_base = 2 + (i + 1) * 2 + 1;
-
-        // Seite
         indices.push_back(apexIndex);
         indices.push_back(i1_side);
         indices.push_back(i0_side);
-
-        // Basis
         indices.push_back(baseCenterIndex);
         indices.push_back(i0_base);
         indices.push_back(i1_base);
@@ -159,35 +139,34 @@ void Cone::createObject()
         glGenVertexArrays(1, &_vertexArrayObject);
     glBindVertexArray(_vertexArrayObject);
 
-    // VBOs
-    GLuint position_buffer;
-    glGenBuffers(1, &position_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, position_buffer);
+    if (_positionBuffer == 0)
+        glGenBuffers(1, &_positionBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _positionBuffer);
     glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(glm::vec3), positions.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-    GLuint normal_buffer;
-    glGenBuffers(1, &normal_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
+    if (_normalBuffer == 0)
+        glGenBuffers(1, &_normalBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _normalBuffer);
     glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(1);
 
-    GLuint texcoord_buffer;
-    glGenBuffers(1, &texcoord_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, texcoord_buffer);
+    if (_texCoordBuffer == 0)
+        glGenBuffers(1, &_texCoordBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _texCoordBuffer);
     glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(glm::vec2), texCoords.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(2);
 
-    GLuint index_buffer;
-    glGenBuffers(1, &index_buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+    if (_indexBuffer == 0)
+        glGenBuffers(1, &_indexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+    // --- ENDE NEUE BUFFER-VERWALTUNG ---
 
     glBindVertexArray(0);
-
     VERIFY(CG::checkError());
 }
 

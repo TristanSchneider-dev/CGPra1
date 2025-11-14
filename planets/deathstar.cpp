@@ -31,6 +31,19 @@ void DeathStar::recreate()
         _cone->recreate();
 }
 
+// --- NEU HINZUGEFÜGT ---
+void DeathStar::setResolution(unsigned int segments)
+{
+    // 1. Rufe die Basis-Implementierung (Planet) auf.
+    //    Diese kümmert sich um die Kugel selbst, den Orbit (Ring)
+    //    und alle Standard-Kinder (_children).
+    Planet::setResolution(segments);
+
+    // 2. Kümmere dich um die Objekte, die NUR der DeathStar besitzt (den Kegel).
+    if (_cone)
+        _cone->setResolution(segments);
+}
+
 void DeathStar::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 {
     // 1. Definiere die Basis-Matrix (flach oder 3D)

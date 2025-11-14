@@ -193,6 +193,23 @@ void Planet::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
     }
 }
 
+// --- NEU HINZUGEFÜGT ---
+void Planet::setResolution(unsigned int segments)
+{
+    // 1. Eigene Auflösung setzen (ruft recreate() für diese Kugel auf)
+    Drawable::setResolution(segments);
+
+    // 2. Auflösung an den Orbit (Ring) weitergeben
+    if (_orbit)
+        _orbit->setResolution(segments);
+
+    // 3. Auflösung an alle Kinder (Planeten/Monde/Sonnen) weitergeben
+    for (const auto& child : _children)
+    {
+        child->setResolution(segments);
+    }
+}
+
 void Planet::setLights(std::shared_ptr<Sun> sun, std::shared_ptr<Cone> laser)
 {
     _sun = sun;
@@ -208,24 +225,23 @@ void Planet::addChild(std::shared_ptr<Planet> child)
 
 
 void Planet::createObject(){
-    unsigned int latitudeSegments = 30;
-    unsigned int longitudeSegments = 30;
+    unsigned int latitudeSegments = _resolutionSegments;
+    unsigned int longitudeSegments = _resolutionSegments;
 
     std::vector<glm::vec3> positions;
     std::vector<glm::vec3> normals;
     std::vector<glm::vec2> texCoords;
     std::vector<unsigned int> indices;
 
+    // ... (Die Logik zum Füllen der Vektoren bleibt exakt gleich) ...
     for (unsigned int i = 0; i <= latitudeSegments; ++i)
     {
         float v = (float)i / latitudeSegments;
         float latitudeAngle = glm::radians(-90.0f + v * 180.0f);
-
         for (unsigned int j = 0; j <= longitudeSegments; ++j)
         {
             float u = (float)j / longitudeSegments;
             float longitudeAngle = glm::radians(u * 360.0f);
-
             float x = _radius * cos(latitudeAngle) * cos(longitudeAngle);
             float y = _radius * sin(latitudeAngle);
             float z = _radius * cos(latitudeAngle) * sin(longitudeAngle);
@@ -234,7 +250,6 @@ void Planet::createObject(){
             texCoords.push_back(glm::vec2(u, 1.0f - v));
         }
     }
-
     for (unsigned int i = 0; i < latitudeSegments; ++i)
     {
         for (unsigned int j = 0; j < longitudeSegments; ++j)
@@ -243,11 +258,9 @@ void Planet::createObject(){
             unsigned int v2 = v1 + 1;
             unsigned int v3 = ((i + 1) * (longitudeSegments + 1)) + j;
             unsigned int v4 = v3 + 1;
-
             indices.push_back(v1);
             indices.push_back(v3);
             indices.push_back(v2);
-
             indices.push_back(v2);
             indices.push_back(v3);
             indices.push_back(v4);
@@ -260,31 +273,32 @@ void Planet::createObject(){
         glGenVertexArrays(1, &_vertexArrayObject);
     glBindVertexArray(_vertexArrayObject);
 
-    GLuint position_buffer;
-    glGenBuffers(1, &position_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, position_buffer);
+    if (_positionBuffer == 0)
+        glGenBuffers(1, &_positionBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _positionBuffer);
     glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(glm::vec3), positions.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-    GLuint normal_buffer;
-    glGenBuffers(1, &normal_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, normal_buffer);
+    if (_normalBuffer == 0)
+        glGenBuffers(1, &_normalBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _normalBuffer);
     glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(1);
 
-    GLuint texcoord_buffer;
-    glGenBuffers(1, &texcoord_buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, texcoord_buffer);
+    if (_texCoordBuffer == 0)
+        glGenBuffers(1, &_texCoordBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _texCoordBuffer);
     glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(glm::vec2), texCoords.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(2);
 
-    GLuint index_buffer;
-    glGenBuffers(1, &index_buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+    if (_indexBuffer == 0)
+        glGenBuffers(1, &_indexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+    // --- ENDE NEUE BUFFER-VERWALTUNG ---
 
     glBindVertexArray(0);
     VERIFY(CG::checkError());
