@@ -55,6 +55,7 @@ GLWidget::GLWidget(QWidget *&parent) : QOpenGLWidget(parent),
      * *************************/
                                                         // radius, distance, h/day, days/year, texture, startAngle, inclination
     _earth          = std::make_shared<Planet> ("Erde",     1.0,    0.0,    24.0,   1, ":/res/images/earth.bmp", 0.0f, 0.0f);
+    _earth->setCloudTexture(":/res/images/clouds.bmp");
     auto moon       = std::make_shared<Planet>("Mond",      0.215,  2.0,    27.3,   27, ":/res/images/moon.bmp", randAngle(), 5.1f);
     auto sun        = std::make_shared<Sun>("Sonne",        1.2,    6.0,    50.0,   350, ":/res/images/sun.bmp", randAngle(), 7.25f); // 7.25 (Ekliptikneigung d. Sonne)
 

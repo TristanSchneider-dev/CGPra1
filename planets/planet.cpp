@@ -66,6 +66,16 @@ void Planet::init()
         }
     }
 
+    // NEU: Lade die Wolkentextur, falls vorhanden
+    if (!_cloudTextureLocation.empty())
+    {
+        _cloudTextureID = loadTexture(_cloudTextureLocation);
+        if (_cloudTextureID == 0)
+        {
+            std::cerr << "Could not load cloud texture for " << _name << " from " << _cloudTextureLocation << std::endl;
+        }
+    }
+
     _orbit->init();
     _path->init();
     for (const auto& child : _children)
@@ -102,9 +112,28 @@ void Planet::draw(glm::mat4 projection_matrix) const
     glUseProgram(_program);
     glBindVertexArray(_vertexArrayObject);
 
+    // --- TEXTUR-BINDING START ---
+
+    // Binde Erd-Textur an Einheit 0
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _textureID);
     glUniform1i(glGetUniformLocation(_program, "uTextureSampler"), 0);
+
+    // Binde Wolken-Textur an Einheit 1 (falls vorhanden)
+    bool hasClouds = (_cloudTextureID != 0);
+    if (hasClouds)
+    {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, _cloudTextureID);
+        glUniform1i(glGetUniformLocation(_program, "uCloudSampler"), 1);
+    }
+    glUniform1i(glGetUniformLocation(_program, "uHasClouds"), hasClouds);
+
+    // Zeit für Wolken-Animation
+    float timeInSeconds = _totalTimeMs / 1000.0f;
+    glUniform1f(glGetUniformLocation(_program, "uTime"), timeInSeconds);
+
+    // --- TEXTUR-BINDING ENDE ---
 
     glm::vec3 lightPosView = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
@@ -123,7 +152,15 @@ void Planet::draw(glm::mat4 projection_matrix) const
 
     glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, 0);
 
+    // Unbinden
     glBindVertexArray(0);
+
+    if (hasClouds)
+    {
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     VERIFY(CG::checkError());
@@ -131,7 +168,9 @@ void Planet::draw(glm::mat4 projection_matrix) const
 
 void Planet::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 {
-    // 1. Definiere EINE Basis-Matrix, die die 3D-Orbit-Einstellung berücksichtigt.
+    // NEU: Gesamtzeit für Animationen
+    _totalTimeMs += elapsedTimeMs;
+
     glm::mat4 baseOperatingMatrix;
 
     if (Config::show3DOrbits)
@@ -390,4 +429,9 @@ void Planet::createPath(){
     _path->recreate();
     for(auto child : _children)
         child->createPath();
+}
+
+void Planet::setCloudTexture(std::string textureLocation)
+{
+    _cloudTextureLocation = textureLocation;
 }

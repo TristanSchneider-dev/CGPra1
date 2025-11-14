@@ -20,8 +20,8 @@ public:
             float hoursPerDay = 24.0f,
             unsigned int daysPerYear = 365,
             std::string textureLocation = ":/res/images/earth.bmp",
-            float startAngle = 0.0f, // NEU
-            float inclination = 0.0f  // NEU
+            float startAngle = 0.0f,
+            float inclination = 0.0f
             );
 
     virtual void init() override;
@@ -33,8 +33,10 @@ public:
     virtual void addChild(std::shared_ptr<Planet> child);
     virtual void calculatePath(glm::mat4 modelViewMatrix);
 
-    // --- NEU HINZUGEFÜGT ---
     virtual void setResolution(unsigned int segments) override;
+
+    // NEU: Setter für die Wolkentextur
+    virtual void setCloudTexture(std::string textureLocation);
 
     ~Planet();
 
@@ -43,7 +45,7 @@ protected:
 
     float _radius;
     float _distance;
-    float _inclination; // NEU
+    float _inclination;
 
     unsigned int _daysPerYear;
 
@@ -53,10 +55,16 @@ protected:
     float _globalRotation;
     float _globalRotationSpeed;
 
+    float _totalTimeMs = 0.0f; // NEU: Für Animation
+
     unsigned int _indexCount = 0;
 
     std::string _textureLocation;
     GLuint _textureID = 0;
+
+    // NEU: Variablen für Wolkentextur
+    std::string _cloudTextureLocation;
+    GLuint _cloudTextureID = 0;
 
     std::shared_ptr<Orbit> _orbit;
     std::shared_ptr<Path> _path;
