@@ -8,5 +8,6 @@
         <file>shader/sun.fs.glsl</file>
         <file>shader/path.vs.glsl</file>
         <file>shader/path.fs.glsl</file>
+        <file>shader/ring.fs.glsl</file>
     </qresource>
 </RCC>

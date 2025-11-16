@@ -28,6 +28,7 @@
 #include "planets/planet.h"
 #include "planets/sun.h"
 #include "planets/skybox.h"
+#include "planets/ring.h" // NEU
 
 // Kleine Helferfunktion für Zufallswinkel
 static float randAngle() {
@@ -65,6 +66,17 @@ GLWidget::GLWidget(QWidget *&parent) : QOpenGLWidget(parent),
     auto mars       = std::make_shared<Planet>("Mars",      0.453,  10.6,   24.7,   700, ":/res/images/mars.bmp", randAngle(), 1.85f);
     auto jupiter    = std::make_shared<Planet>("Jupiter",   0.453,  13.32,  9.9,    3500, ":/res/images/jupiter.bmp", randAngle(), 1.3f);
     auto saturn     = std::make_shared<Planet>("Saturn",    0.453,  15.92,  10.6,   10500, ":/res/images/saturn.bmp", randAngle(), 2.5f);
+
+    // --- NEU: Ring für Saturn erstellen ---
+    float saturnRadius = 0.453f;
+    auto saturnRing = std::make_shared<Ring>("Saturnring",
+                                            saturnRadius * 1.2f,  // Innerer Radius
+                                            saturnRadius * 2.2f,  // Äußerer Radius
+                                            ":/res/images/ring.bmp",
+                                            26.7f); // Axiale Neigung von Saturn
+    saturn->setRing(saturnRing);
+    // --- ENDE NEU ---
+
 
     // jupiter moons
     auto io         = std::make_shared<Planet>("Io",        0.036,  0.8,    10.6,   30, ":/res/images/moon.bmp", randAngle(), 0.04f);
@@ -152,6 +164,7 @@ void GLWidget::paintGL()
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // === 1. ERDE ZEICHNEN ===
+    // (Zeichnet die gesamte Hierarchie, inkl. Saturn und Ring)
     glDisable(GL_CULL_FACE);
     _earth->draw(projection_matrix);
     glEnable(GL_CULL_FACE);

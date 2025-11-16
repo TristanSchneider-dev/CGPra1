@@ -10,6 +10,7 @@ class Orbit;
 class Path;
 class Sun;
 class Cone;
+class Ring; // NEU: Forward declaration
 
 class Planet : public Drawable
 {
@@ -38,6 +39,9 @@ public:
     // NEU: Setter für die Wolkentextur
     virtual void setCloudTexture(std::string textureLocation);
 
+    // NEU: Setter für den Ring
+    virtual void setRing(std::shared_ptr<Ring> ring);
+
     ~Planet();
 
 protected:
@@ -65,6 +69,9 @@ protected:
     // NEU: Variablen für Wolkentextur
     std::string _cloudTextureLocation;
     GLuint _cloudTextureID = 0;
+
+    // NEU: Variable für den Ring
+    std::shared_ptr<Ring> _ring;
 
     std::shared_ptr<Orbit> _orbit;
     std::shared_ptr<Path> _path;

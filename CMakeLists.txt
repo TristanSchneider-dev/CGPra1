@@ -83,6 +83,8 @@ add_executable(tychobrahe
 
         shader/skybox.vs.glsl
         shader/skybox.fs.glsl
+        planets/ring.h
+        planets/ring.cpp
 )
 
 include_directories(${CMAKE_SOURCE_DIR}/glbase ${OPENGL_INCLUDE_DIR})

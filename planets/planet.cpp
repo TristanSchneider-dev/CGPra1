@@ -19,6 +19,8 @@
 #include "planets/sun.h"
 #include "planets/orbit.h"
 #include "planets/path.h"
+#include "planets/ring.h" // NEU
+
 
 Planet::Planet(std::string name,
                float radius,
@@ -37,7 +39,8 @@ Planet::Planet(std::string name,
     _daysPerYear(daysPerYear),
     _textureLocation(textureLocation),
     _textureID(0),
-    _globalRotation(startAngle)
+    _globalRotation(startAngle),
+    _ring(nullptr) // NEU: Ring initialisieren
 {
     if (hoursPerDay > 0.0f)
         _localRotationSpeed = (24.0f / hoursPerDay) * 360.0f;
@@ -56,6 +59,10 @@ Planet::Planet(std::string name,
 void Planet::init()
 {
     Drawable::init();
+
+    // NEU: Ring initialisieren (falls vorhanden)
+    if (_ring)
+        _ring->init();
 
     if (!_textureLocation.empty())
     {
@@ -87,6 +94,11 @@ void Planet::init()
 void Planet::recreate()
 {
     Drawable::recreate();
+
+    // NEU: Ring neu erstellen
+    if (_ring)
+        _ring->recreate();
+
     _orbit->recreate();
     _path->recreate();
     for (const auto& child : _children)
@@ -163,6 +175,25 @@ void Planet::draw(glm::mat4 projection_matrix) const
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    // --- NEU: Ring zeichnen (nach dem Planeten) ---
+    if (_ring)
+    {
+        // Da der Ring flach ist, Culling deaktivieren, damit man ihn von beiden Seiten sieht
+        glDisable(GL_CULL_FACE);
+
+        // Alpha-Blending für Transparenz aktivieren
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        _ring->draw(projection_matrix);
+
+        // Blending und Culling zurücksetzen
+        glDisable(GL_BLEND);
+        glEnable(GL_CULL_FACE);
+    }
+    // --- ENDE RING ---
+
+
     VERIFY(CG::checkError());
 }
 
@@ -218,6 +249,15 @@ void Planet::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
         modelview_stack.top() = glm::rotate(modelview_stack.top(), glm::radians(_globalRotation), glm::vec3(0,1,0));
         // 2. Schiebe auf die Distanz (Orbit-Radius) entlang der X-Achse
         modelview_stack.top() = glm::translate(modelview_stack.top(), glm::vec3(_distance, 0, 0));
+
+        // --- NEU: Ring-Update ---
+        // Die Matrix *vor* der lokalen Rotation des Planeten an den Ring übergeben.
+        if (_ring)
+        {
+            _ring->update(elapsedTimeMs, modelview_stack.top());
+        }
+        // --- ENDE RING ---
+
         // 3. Wende die lokale Rotation an (Drehung um sich selbst)
         modelview_stack.top() = glm::rotate(modelview_stack.top(), glm::radians(_localRotation), glm::vec3(0,1,0));
 
@@ -242,6 +282,10 @@ void Planet::setResolution(unsigned int segments)
     if (_orbit)
         _orbit->setResolution(segments);
 
+    // NEU: Auflösung an den Planeten-Ring weitergeben
+    if (_ring)
+        _ring->setResolution(segments);
+
     // 3. Auflösung an alle Kinder (Planeten/Monde/Sonnen) weitergeben
     for (const auto& child : _children)
     {
@@ -253,8 +297,19 @@ void Planet::setLights(std::shared_ptr<Sun> sun, std::shared_ptr<Cone> laser)
 {
     _sun = sun;
     _laser = laser;
+
+    // NEU: Lichter auch an den Ring weitergeben
+    if (_ring)
+        _ring->setLights(sun, laser);
+
     for(auto child : _children)
         child->setLights(sun, laser);
+}
+
+// NEU: Implementierung von setRing
+void Planet::setRing(std::shared_ptr<Ring> ring)
+{
+    _ring = ring;
 }
 
 void Planet::addChild(std::shared_ptr<Planet> child)
