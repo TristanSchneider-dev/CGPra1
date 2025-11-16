@@ -19,7 +19,7 @@
 #include "planets/sun.h"
 #include "planets/orbit.h"
 #include "planets/path.h"
-#include "planets/ring.h" // NEU
+#include "planets/ring.h"
 
 
 Planet::Planet(std::string name,
@@ -40,7 +40,7 @@ Planet::Planet(std::string name,
     _textureLocation(textureLocation),
     _textureID(0),
     _globalRotation(startAngle),
-    _ring(nullptr) // NEU: Ring initialisieren
+    _ring(nullptr)
 {
     if (hoursPerDay > 0.0f)
         _localRotationSpeed = (24.0f / hoursPerDay) * 360.0f;
@@ -60,7 +60,6 @@ void Planet::init()
 {
     Drawable::init();
 
-    // NEU: Ring initialisieren (falls vorhanden)
     if (_ring)
         _ring->init();
 
@@ -73,7 +72,6 @@ void Planet::init()
         }
     }
 
-    // NEU: Lade die Wolkentextur, falls vorhanden
     if (!_cloudTextureLocation.empty())
     {
         _cloudTextureID = loadTexture(_cloudTextureLocation);
@@ -95,7 +93,6 @@ void Planet::recreate()
 {
     Drawable::recreate();
 
-    // NEU: Ring neu erstellen
     if (_ring)
         _ring->recreate();
 
@@ -126,12 +123,10 @@ void Planet::draw(glm::mat4 projection_matrix) const
 
     // --- TEXTUR-BINDING START ---
 
-    // Binde Erd-Textur an Einheit 0
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _textureID);
     glUniform1i(glGetUniformLocation(_program, "uTextureSampler"), 0);
 
-    // Binde Wolken-Textur an Einheit 1 (falls vorhanden)
     bool hasClouds = (_cloudTextureID != 0);
     if (hasClouds)
     {
@@ -141,12 +136,12 @@ void Planet::draw(glm::mat4 projection_matrix) const
     }
     glUniform1i(glGetUniformLocation(_program, "uHasClouds"), hasClouds);
 
-    // Zeit für Wolken-Animation
     float timeInSeconds = _totalTimeMs / 1000.0f;
     glUniform1f(glGetUniformLocation(_program, "uTime"), timeInSeconds);
 
     // --- TEXTUR-BINDING ENDE ---
 
+    // --- SONNENLICHT-UNIFORMS ---
     glm::vec3 lightPosView = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
@@ -158,6 +153,29 @@ void Planet::draw(glm::mat4 projection_matrix) const
 
     glUniform3fv(glGetUniformLocation(_program, "uLightPosView"), 1, glm::value_ptr(lightPosView));
     glUniform3fv(glGetUniformLocation(_program, "uLightColor"), 1, glm::value_ptr(lightColor));
+
+    // --- NEU: LASER-UNIFORMS ---
+    bool hasLaser = (_laser != nullptr);
+    glUniform1i(glGetUniformLocation(_program, "uHasLaser"), hasLaser);
+    if (hasLaser)
+    {
+        // Hole die Daten vom Cone-Objekt (das als _laser gespeichert ist)
+        glm::vec3 laserPosView = _laser->getPosition();
+        glm::vec3 laserDirView = _laser->getDirection();
+
+        // Hole den Winkel aus der Config (in Grad) und konvertiere in Cosinus
+        // Wir übergeben den Cosinus, weil das im Shader effizienter ist.
+        float cutoffAngleRad = glm::radians(Config::laserCutoff);
+        float cutoffCos = cos(cutoffAngleRad);
+
+        glUniform3fv(glGetUniformLocation(_program, "uLaserPosView"), 1, glm::value_ptr(laserPosView));
+        glUniform3fv(glGetUniformLocation(_program, "uLaserDirView"), 1, glm::value_ptr(laserDirView));
+        glUniform1f(glGetUniformLocation(_program, "uLaserCutoffCos"), cutoffCos);
+
+        // Laserfarbe ist Rot
+        glUniform3f(glGetUniformLocation(_program, "uLaserColor"), 1.0f, 0.0f, 0.0f);
+    }
+    // --- ENDE NEU ---
 
     glUniformMatrix4fv(glGetUniformLocation(_program, "projection_matrix"), 1, GL_FALSE, glm::value_ptr(projection_matrix));
     glUniformMatrix4fv(glGetUniformLocation(_program, "modelview_matrix"), 1, GL_FALSE, glm::value_ptr(_modelViewMatrix));
@@ -175,57 +193,41 @@ void Planet::draw(glm::mat4 projection_matrix) const
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // --- NEU: Ring zeichnen (nach dem Planeten) ---
+    // --- Ring zeichnen (nach dem Planeten) ---
     if (_ring)
     {
-        // Da der Ring flach ist, Culling deaktivieren, damit man ihn von beiden Seiten sieht
         glDisable(GL_CULL_FACE);
-
-        // Alpha-Blending für Transparenz aktivieren
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         _ring->draw(projection_matrix);
 
-        // Blending und Culling zurücksetzen
         glDisable(GL_BLEND);
         glEnable(GL_CULL_FACE);
     }
-    // --- ENDE RING ---
-
 
     VERIFY(CG::checkError());
 }
 
 void Planet::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 {
-    // NEU: Gesamtzeit für Animationen
     _totalTimeMs += elapsedTimeMs;
-
     glm::mat4 baseOperatingMatrix;
 
     if (Config::show3DOrbits)
     {
-        // 3D-Modus (geneigt): Parent-Position + Neigung
         baseOperatingMatrix = glm::rotate(modelViewMatrix, glm::radians(_inclination), glm::vec3(0.0f, 0.0f, 1.0f));
     }
     else
     {
-        // 2D-Modus (flach): Nur Parent-Position
         baseOperatingMatrix = modelViewMatrix;
     }
 
-    // 2. Update Orbit/Pfad
     _orbit->update(elapsedTimeMs, baseOperatingMatrix);
     _path->update(elapsedTimeMs, modelViewMatrix);
 
-    // 3. Berechne die vergangene Zeit
     float elapsedSimulatedDays = (elapsedTimeMs / 60000.0f) * Config::animationSpeed;
 
-    // 4. Rotationen berechnen
-    //    ========================================================
-    //    HIER WERDEN DIE BUTTONS GELESEN
-    //    ========================================================
     if (Config::GlobalRotation)
         _globalRotation += elapsedSimulatedDays * _globalRotationSpeed;
 
@@ -237,56 +239,40 @@ void Planet::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 
     while(_localRotation >= 360.f) _localRotation -= 360.0f;
     while(_localRotation < 0.0f) _localRotation += 360.0f;
-    //    ========================================================
-    //    ENDE DER BUTTON-LOGIK
-    //    ========================================================
 
-    // 5. Eigene ModelView-Matrix berechnen
     std::stack<glm::mat4> modelview_stack;
-    modelview_stack.push(baseOperatingMatrix); // Starte von der gesteuerten Matrix
+    modelview_stack.push(baseOperatingMatrix);
 
-        // 1. Rotiere um den Parent (z.B. Sonne) auf der Y-Achse
         modelview_stack.top() = glm::rotate(modelview_stack.top(), glm::radians(_globalRotation), glm::vec3(0,1,0));
-        // 2. Schiebe auf die Distanz (Orbit-Radius) entlang der X-Achse
         modelview_stack.top() = glm::translate(modelview_stack.top(), glm::vec3(_distance, 0, 0));
 
-        // --- NEU: Ring-Update ---
-        // Die Matrix *vor* der lokalen Rotation des Planeten an den Ring übergeben.
         if (_ring)
         {
             _ring->update(elapsedTimeMs, modelview_stack.top());
         }
-        // --- ENDE RING ---
 
-        // 3. Wende die lokale Rotation an (Drehung um sich selbst)
         modelview_stack.top() = glm::rotate(modelview_stack.top(), glm::radians(_localRotation), glm::vec3(0,1,0));
 
         _modelViewMatrix = glm::mat4(modelview_stack.top());
 
     modelview_stack.pop();
 
-    // 6. REKURSION: Kinder updaten
     for (const auto& child : _children)
     {
         child->update(elapsedTimeMs, _modelViewMatrix);
     }
 }
 
-// --- NEU HINZUGEFÜGT ---
 void Planet::setResolution(unsigned int segments)
 {
-    // 1. Eigene Auflösung setzen (ruft recreate() für diese Kugel auf)
     Drawable::setResolution(segments);
 
-    // 2. Auflösung an den Orbit (Ring) weitergeben
     if (_orbit)
         _orbit->setResolution(segments);
 
-    // NEU: Auflösung an den Planeten-Ring weitergeben
     if (_ring)
         _ring->setResolution(segments);
 
-    // 3. Auflösung an alle Kinder (Planeten/Monde/Sonnen) weitergeben
     for (const auto& child : _children)
     {
         child->setResolution(segments);
@@ -298,7 +284,6 @@ void Planet::setLights(std::shared_ptr<Sun> sun, std::shared_ptr<Cone> laser)
     _sun = sun;
     _laser = laser;
 
-    // NEU: Lichter auch an den Ring weitergeben
     if (_ring)
         _ring->setLights(sun, laser);
 
@@ -306,7 +291,6 @@ void Planet::setLights(std::shared_ptr<Sun> sun, std::shared_ptr<Cone> laser)
         child->setLights(sun, laser);
 }
 
-// NEU: Implementierung von setRing
 void Planet::setRing(std::shared_ptr<Ring> ring)
 {
     _ring = ring;
@@ -327,7 +311,6 @@ void Planet::createObject(){
     std::vector<glm::vec2> texCoords;
     std::vector<unsigned int> indices;
 
-    // ... (Die Logik zum Füllen der Vektoren bleibt exakt gleich) ...
     for (unsigned int i = 0; i <= latitudeSegments; ++i)
     {
         float v = (float)i / latitudeSegments;
@@ -392,7 +375,6 @@ void Planet::createObject(){
         glGenBuffers(1, &_indexBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
-    // --- ENDE NEUE BUFFER-VERWALTUNG ---
 
     glBindVertexArray(0);
     VERIFY(CG::checkError());
@@ -410,7 +392,6 @@ std::string Planet::getFragmentShader() const
 
 Planet::~Planet(){
 }
-
 
 /*************************************************
  * Path-Logik (bleibt unverändert)
@@ -449,7 +430,6 @@ unsigned int Planet::greatestCommonDivisor(unsigned int a, unsigned int b)
 
 void Planet::updatePath(float elapsedSimulatedDays, glm::mat4 modelViewMatrix)
 {
-    // Die Path-Logik nutzt die Neigung, da sie die *echte* Bewegung aufzeichnet
     glm::mat4 orbitBaseMatrix = glm::rotate(modelViewMatrix, glm::radians(_inclination), glm::vec3(0.0f, 0.0f, 1.0f));
 
     _globalRotation += elapsedSimulatedDays * _globalRotationSpeed;

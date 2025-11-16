@@ -19,27 +19,21 @@ DeathStar::DeathStar(std::string name, float radius, float distance, float hours
 
 void DeathStar::init()
 {
-    Planet::init(); // Ruft die Basis-Implementierung auf
+    Planet::init();
     if (_cone)
         _cone->init();
 }
 
 void DeathStar::recreate()
 {
-    Planet::recreate(); // Ruft die Basis-Implementierung auf
+    Planet::recreate();
     if (_cone)
         _cone->recreate();
 }
 
-// --- NEU HINZUGEFÜGT ---
 void DeathStar::setResolution(unsigned int segments)
 {
-    // 1. Rufe die Basis-Implementierung (Planet) auf.
-    //    Diese kümmert sich um die Kugel selbst, den Orbit (Ring)
-    //    und alle Standard-Kinder (_children).
     Planet::setResolution(segments);
-
-    // 2. Kümmere dich um die Objekte, die NUR der DeathStar besitzt (den Kegel).
     if (_cone)
         _cone->setResolution(segments);
 }
@@ -62,7 +56,6 @@ void DeathStar::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
     if(Config::localRotation)
         _localRotation += elapsedSimulatedDays * _localRotationSpeed;
 
-    // Umlaufbahn (wird von "Lokale Orbits" gesteuert)
     if (Config::GlobalRotation)
         _globalRotation += elapsedSimulatedDays * _globalRotationSpeed;
 
@@ -95,9 +88,34 @@ void DeathStar::draw(glm::mat4 projection_matrix) const
     // Zeichne den Planeten (Kugel) und seinen Orbit/Pfad
     Planet::draw(projection_matrix);
 
-    // Zeichne den Kegel
+    // --- MODIFIZIERT: Kegel zeichnen ---
     if (_cone)
+    {
+        // Wir wollen den Strahl als transparentes Objekt rendern.
+
+        // 1. Blending aktivieren (Durchsichtigkeit)
+        glEnable(GL_BLEND);
+
+        // 2. Standard-Alpha-Blending verwenden
+        // (Farbe * Alpha) + (Was dahinter liegt * (1 - Alpha))
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // 3. Tiefentest AKTIVIERT lassen (glEnable)
+        // Der Strahl soll korrekt vom Todesstern verdeckt werden.
+        // Die 'draw'-Methode von Planet sollte den Tiefentest am Ende
+        // wieder aktiviert haben (glEnable(GL_DEPTH_TEST)).
+
+        // 4. Culling deaktivieren, damit man den Strahl auch von innen sieht.
+        glDisable(GL_CULL_FACE);
+
+        // 5. Kegel (Laserstrahl) zeichnen
         _cone->draw(projection_matrix);
+
+        // 6. OpenGL-Zustand für den Rest der Szene wiederherstellen
+        glEnable(GL_CULL_FACE);
+        glDisable(GL_BLEND);
+    }
+    // --- ENDE MODIFIZIERT ---
 }
 
 std::shared_ptr<Cone> DeathStar::cone() const

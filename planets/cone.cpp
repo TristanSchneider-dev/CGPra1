@@ -3,9 +3,9 @@
 #include "cone.h"
 
 #include <vector>
-#include <iostream> // für std::cerr/endl
-#include <cmath> // für atan
-#include <glm/gtc/constants.hpp> // für glm::pi()
+#include <iostream>
+#include <cmath>
+#include <glm/gtc/constants.hpp>
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -18,83 +18,74 @@ Cone::Cone(std::string name, float distance):
     Drawable(name),
     _distance(distance), _angle(.0f)
 {
-
+    _angle = -1.0f;
 }
 
 
 
 void Cone::draw(glm::mat4 projection_matrix) const
 {
-    // Behoben: Die Abfrage auf Config::laser wurde entfernt.
-    /*
-    if (!Config::laser)
-        return;
-    */
-
     if(_program == 0){
         std::cerr << "Cone" << _name << "not initialized. Call init() first." << std::endl;
         return;
     }
 
-    // Load program
     glUseProgram(_program);
-
-    // bin vertex array object
     glBindVertexArray(_vertexArrayObject);
 
-    // set parameter
     glUniformMatrix4fv(glGetUniformLocation(_program, "projection_matrix"), 1, GL_FALSE, glm::value_ptr(projection_matrix));
     glUniformMatrix4fv(glGetUniformLocation(_program, "modelview_matrix"), 1, GL_FALSE, glm::value_ptr(_modelViewMatrix));
 
-    // call draw
     glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, 0);
 
-    // unbin vertex array object
     glBindVertexArray(0);
-
-    // check for errors
     VERIFY(CG::checkError());
 }
 
 void Cone::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 {
-    // Die modelViewMatrix ist die des Elternelements (Death Star Kern).
-    // Wir verschieben den Kegel an die Oberfläche (entlang +Y)
-    _modelViewMatrix = glm::translate(modelViewMatrix, glm::vec3(0.0f, _distance, 0.0f));
+    if (std::abs(_angle - Config::laserCutoff) > 0.1f)
+    {
+        recreate();
+    }
 
-    // Speichern der globalen Position (Apex des Kegels)
+    glm::mat4 translatedMatrix = glm::translate(modelViewMatrix, glm::vec3(_distance, 0.0f, 0.0f));
+    _modelViewMatrix = glm::rotate(translatedMatrix, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+
     _position = glm::vec3(_modelViewMatrix * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-    // Speichern der globalen Richtung (die Y-Achse des Kegels)
     _direction = glm::normalize(glm::vec3(_modelViewMatrix * glm::vec4(0.0f, 1.0f, 0.0f, 0.0f)));
 }
 
 std::string Cone::getVertexShader() const
 {
-    // Annahme: simple shader (wie beim Orbit)
+    // Der simple Vertex-Shader ist weiterhin korrekt
     return Drawable::loadShaderFile(":/shader/simple.vs.glsl");
 }
 
 std::string Cone::getFragmentShader() const
 {
-    // Annahme: simple shader (wie beim Orbit)
-    return Drawable::loadShaderFile(":/shader/simple.fs.glsl");
+    // --- MODIFIZIERT ---
+    // Wir verwenden unseren neuen, roten transparenten Shader
+    return Drawable::loadShaderFile(":/shader/cone.fs.glsl");
+    // --- ENDE MODIFIZIERT ---
 }
 
 void Cone::createObject()
 {
     float height = 10.0f;
-    float baseRadius = 0.5f;
-    unsigned int segments = _resolutionSegments;
+    float angleRad = glm::radians(Config::laserCutoff);
+    float baseRadius = tan(angleRad) * height;
 
-    _angle = glm::degrees(atan(baseRadius / height));
+    _angle = Config::laserCutoff;
+
+    unsigned int segments = _resolutionSegments;
 
     std::vector<glm::vec3> positions;
     std::vector<glm::vec3> normals;
     std::vector<glm::vec2> texCoords;
     std::vector<unsigned int> indices;
 
-    // ... (Die Logik zum Füllen der Vektoren bleibt exakt gleich) ...
+    // ... (Geometrie-Erstellung bleibt gleich) ...
     unsigned int apexIndex = 0;
     positions.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
     normals.push_back(glm::vec3(0.0f, -1.0f, 0.0f));
@@ -131,10 +122,8 @@ void Cone::createObject()
         indices.push_back(i0_base);
         indices.push_back(i1_base);
     }
-
     _indexCount = static_cast<unsigned int>(indices.size());
 
-    // VAO
     if(_vertexArrayObject == 0)
         glGenVertexArrays(1, &_vertexArrayObject);
     glBindVertexArray(_vertexArrayObject);
@@ -164,7 +153,6 @@ void Cone::createObject()
         glGenBuffers(1, &_indexBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
-    // --- ENDE NEUE BUFFER-VERWALTUNG ---
 
     glBindVertexArray(0);
     VERIFY(CG::checkError());
@@ -182,6 +170,5 @@ glm::vec3 Cone::getPosition() const
 
 float Cone::getAngle() const
 {
-    // _angle wird jetzt in createObject() berechnet
     return _angle;
 }

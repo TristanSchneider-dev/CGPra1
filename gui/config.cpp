@@ -12,8 +12,9 @@ bool Config::sunLight = true;
 bool Config::showWireframe = false;
 bool Config::showOrbits = true;
 bool Config::showCoordinateSystem = false;
-
-// --- NEU HINZUGEFÜGT ---
-// Standardmäßig die korrekten 3D-Bahnen anzeigen
 bool Config::show3DOrbits = true;
 bool Config::localOrbits = true;
+
+// --- GEÄNDERT ---
+// Standardwert 2 Grad (passend zum UI-Slider)
+float Config::laserCutoff = 2.0f;

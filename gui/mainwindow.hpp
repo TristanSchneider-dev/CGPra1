@@ -28,9 +28,10 @@ private slots:
     void setCoordinateSystem(bool value);
     void set3DOrbits(bool value);
     void setLocalOrbits(bool value);
+    void setPolygonResolution(int value);
 
     // --- NEU HINZUGEFÜGT ---
-    void setPolygonResolution(int value);
+    void setLaserCutoff(int value);
 
 
 protected:

@@ -10,9 +10,10 @@ namespace Config {
     extern bool showOrbits;
     extern bool showCoordinateSystem;
     extern bool show3DOrbits;
+    extern bool localOrbits;      // Steuert "Lokale Orbits" (um die Sonne)
 
     // --- NEU HINZUFÜGEN ---
-    extern bool localOrbits;      // Steuert "Lokale Orbits" (um die Sonne)
+    extern float laserCutoff;    // Steuert den Winkel des Todesstern-Lasers
 }
 
 #endif // CONFIG_H

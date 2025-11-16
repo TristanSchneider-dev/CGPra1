@@ -18,9 +18,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this->ui->checkBoxCoordinateSystem, SIGNAL(clicked(bool)), this, SLOT(setCoordinateSystem(bool)));
     connect(this->ui->checkBox3DOrbits, SIGNAL(clicked(bool)), this, SLOT(set3DOrbits(bool)));
     connect(this->ui->checkBoxLocalOrbits, SIGNAL(clicked(bool)), this, SLOT(setLocalOrbits(bool)));
+    connect(this->ui->sliderResolution, SIGNAL(valueChanged(int)), this, SLOT(setPolygonResolution(int)));
 
     // --- NEU HINZUGEFÜGT ---
-    connect(this->ui->sliderResolution, SIGNAL(valueChanged(int)), this, SLOT(setPolygonResolution(int)));
+    connect(this->ui->sliderLaserCutoff, SIGNAL(valueChanged(int)), this, SLOT(setLaserCutoff(int)));
 }
 
 MainWindow::~MainWindow()
@@ -35,7 +36,6 @@ void MainWindow::setAnimationSpeed(int value)
     this->ui->groupBox_4->setTitle(title);
 }
 
-// --- NEU HINZUGEFÜGT ---
 void MainWindow::setPolygonResolution(int value)
 {
     // Update den Titel der GroupBox
@@ -46,6 +46,19 @@ void MainWindow::setPolygonResolution(int value)
     // (ui->openGLWidget ist der Name des Widgets aus der .ui Datei)
     this->ui->openGLWidget->setPolygonResolution(value);
 }
+
+// --- NEU HINZUGEFÜGT ---
+void MainWindow::setLaserCutoff(int value)
+{
+    // 1. Setze die globale Config-Variable
+    Config::laserCutoff = static_cast<float>(value);
+
+    // 2. Update den Titel der GroupBox
+    // \xC2\xB0 ist die UTF-8 Kodierung für das Grad-Symbol °
+    QString title = QString("Laser Cutoff: ") + QString::number(value) + "\xC2\xB0";
+    this->ui->groupBox_Laser->setTitle(title);
+}
+// --- ENDE NEU ---
 
 void MainWindow::setLocalRotation(bool value)
 {
