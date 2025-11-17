@@ -4,7 +4,7 @@
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/constants.hpp> // Für glm::pi()
+#include <glm/gtc/constants.hpp>
 
 #include <vector>
 #include <iostream>
@@ -12,11 +12,13 @@
 #include "glbase/gltool.hpp"
 #include "gui/config.h"
 
+#include <QDebug>
+
 Orbit::Orbit(std::string name, float radius):
     Drawable(name),
     _radius(radius)
 {
-
+    qDebug() << "Orbit constructor called for:" << QString::fromStdString(name);
 }
 
 void Orbit::draw(glm::mat4 projection_matrix) const
@@ -25,32 +27,23 @@ void Orbit::draw(glm::mat4 projection_matrix) const
         return;
 
     if(_program == 0){
-        std::cerr << "Orbit" << _name << "not initialized. Call init() first." << std::endl;
+        qDebug() << "Orbit" << QString::fromStdString(_name) << "not initialized. Call init() first.";
         return;
     }
 
-    // Load program
     glUseProgram(_program);
 
-    // bin vertex array object
     glBindVertexArray(_vertexArrayObject);
 
-    // set parameter
     glUniformMatrix4fv(glGetUniformLocation(_program, "projection_matrix"), 1, GL_FALSE, glm::value_ptr(projection_matrix));
     glUniformMatrix4fv(glGetUniformLocation(_program, "modelview_matrix"), 1, GL_FALSE, glm::value_ptr(_modelViewMatrix));
 
-    // --- NEU HINZUGEFÜGT ---
-    // Setze die Farbe auf Rot (R=1, G=0, B=0)
     glUniform3f(glGetUniformLocation(_program, "uColor"), 1.0f, 0.0f, 0.0f);
-    // -----------------------
 
-    // call draw
     glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, 0);
 
-    // unbin vertex array object
     glBindVertexArray(0);
 
-    // check for errors
     VERIFY(CG::checkError());
 }
 
@@ -71,8 +64,9 @@ std::string Orbit::getFragmentShader() const
 
 void Orbit::createObject()
 {
+    qDebug() << "Orbit::createObject() called for:" << QString::fromStdString(_name);
     unsigned int segments = _resolutionSegments;
-    if (segments < 3) segments = 3; // Sicherstellen
+    if (segments < 3) segments = 3;
 
     float ringWidth = 0.02f;
     float innerRadius = _radius - ringWidth;
@@ -84,7 +78,6 @@ void Orbit::createObject()
     std::vector<glm::vec2> texCoords;
     std::vector<unsigned int> indices;
 
-    // ... (Die Logik zum Füllen der Vektoren bleibt exakt gleich) ...
     for (unsigned int i = 0; i < segments; ++i)
     {
         float angle = (float)i / segments * 2.0f * glm::pi<float>();
@@ -110,11 +103,9 @@ void Orbit::createObject()
         indices.push_back(i2);
         indices.push_back(i3);
     }
-    // ... (Ende der Vektor-Füll-Logik) ...
 
     _indexCount = static_cast<unsigned int>(indices.size());
 
-    // --- NEUE BUFFER-VERWALTUNG ---
     if(_vertexArrayObject == 0)
         glGenVertexArrays(1, &_vertexArrayObject);
     glBindVertexArray(_vertexArrayObject);
@@ -144,8 +135,7 @@ void Orbit::createObject()
         glGenBuffers(1, &_indexBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _indexBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
-    // --- ENDE NEUE BUFFER-VERWALTUNG ---
 
     glBindVertexArray(0);
-    VERIFY(CG::checkError()); // Diese Zeile war 159 und sollte jetzt keinen Fehler mehr melden
+    VERIFY(CG::checkError());
 }

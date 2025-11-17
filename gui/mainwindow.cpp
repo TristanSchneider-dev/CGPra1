@@ -1,12 +1,14 @@
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
 #include <QKeyEvent>
+#include <QDebug>
 #include "gui/config.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    qDebug() << "MainWindow constructor called.";
     ui->setupUi(this);
 
     connect(this->ui->sliderAnimationSpeed, SIGNAL(valueChanged(int)), this, SLOT(setAnimationSpeed(int)));
@@ -20,17 +22,18 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(this->ui->checkBoxLocalOrbits, SIGNAL(clicked(bool)), this, SLOT(setLocalOrbits(bool)));
     connect(this->ui->sliderResolution, SIGNAL(valueChanged(int)), this, SLOT(setPolygonResolution(int)));
 
-    // --- NEU HINZUGEFÜGT ---
     connect(this->ui->sliderLaserCutoff, SIGNAL(valueChanged(int)), this, SLOT(setLaserCutoff(int)));
 }
 
 MainWindow::~MainWindow()
 {
+    qDebug() << "MainWindow destructor called.";
     delete ui;
 }
 
 void MainWindow::setAnimationSpeed(int value)
 {
+    qDebug() << "setAnimationSpeed called with value:" << value;
     Config::animationSpeed = float(value) / 2.0f;
     QString title = QString("Animation: ") + QString::number(Config::animationSpeed, 'x', 1) + "x";
     this->ui->groupBox_4->setTitle(title);
@@ -38,71 +41,73 @@ void MainWindow::setAnimationSpeed(int value)
 
 void MainWindow::setPolygonResolution(int value)
 {
-    // Update den Titel der GroupBox
+    qDebug() << "setPolygonResolution called with value:" << value;
     QString title = QString("Auflösung: ") + QString::number(value);
     this->ui->groupBox_Resolution->setTitle(title);
 
-    // Leite den Wert an das GLWidget weiter
-    // (ui->openGLWidget ist der Name des Widgets aus der .ui Datei)
     this->ui->openGLWidget->setPolygonResolution(value);
 }
 
-// --- NEU HINZUGEFÜGT ---
 void MainWindow::setLaserCutoff(int value)
 {
-    // 1. Setze die globale Config-Variable
+    qDebug() << "setLaserCutoff called with value:" << value;
     Config::laserCutoff = static_cast<float>(value);
 
-    // 2. Update den Titel der GroupBox
-    // \xC2\xB0 ist die UTF-8 Kodierung für das Grad-Symbol °
     QString title = QString("Laser Cutoff: ") + QString::number(value) + "\xC2\xB0";
     this->ui->groupBox_Laser->setTitle(title);
 }
-// --- ENDE NEU ---
 
 void MainWindow::setLocalRotation(bool value)
 {
+    qDebug() << "setLocalRotation called with value:" << value;
     Config::localRotation = value;
 }
 
 void MainWindow::setGlobalRotation(bool value)
 {
+    qDebug() << "setGlobalRotation called with value:" << value;
     Config::GlobalRotation = value;
 }
 
 void MainWindow::setSunLight(bool value)
 {
+    qDebug() << "setSunLight called with value:" << value;
     Config::sunLight = value;
 }
 
 void MainWindow::setshowWireframe(bool value)
 {
+    qDebug() << "setshowWireframe called with value:" << value;
     Config::showWireframe = value;
 }
 
 void MainWindow::setshowOrbits(bool value)
 {
+    qDebug() << "setshowOrbits called with value:" << value;
     Config::showOrbits = value;
 }
 
 void MainWindow::setCoordinateSystem(bool value)
 {
+    qDebug() << "setCoordinateSystem called with value:" << value;
     Config::showCoordinateSystem = value;
 }
 
 void MainWindow::set3DOrbits(bool value)
 {
+    qDebug() << "set3DOrbits called with value:" << value;
     Config::show3DOrbits = value;
 }
 
 void MainWindow::setLocalOrbits(bool value)
 {
+    qDebug() << "setLocalOrbits called with value:" << value;
     Config::localOrbits = value;
 }
 
-/* Qt mouse and keyboard events */
 void MainWindow::keyPressEvent(QKeyEvent* event)
 {
+    qDebug() << "keyPressEvent called with key:" << event->key();
     switch (event->key()) {
     case Qt::Key_F:
         if (isFullScreen()) {

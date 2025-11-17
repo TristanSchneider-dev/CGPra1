@@ -18,10 +18,6 @@ public:
 
     glm::vec3 getPosition() const;
 
-    // --- NEU HINZUGEFÜGT ---
-    /**
-     * @see Drawable::update(float, glm::mat4)
-     */
     virtual void update(float elapsedTimeMs, glm::mat4 modelViewMatrix) override;
 
 protected:

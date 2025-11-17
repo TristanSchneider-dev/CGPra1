@@ -5,20 +5,23 @@
 #include "gui/config.h"
 #include "glbase/gltool.hpp"
 
-// Diese Includes beheben die 'incomplete type' Fehler
 #include "planets/orbit.h"
 #include "planets/path.h"
+
+#include <QDebug>
 
 DeathStar::DeathStar(std::string name, float radius, float distance, float hoursPerDay, float daysPerYear, std::string textureLocation,
                      float startAngle, float inclination) :
     Planet(name, radius, distance, hoursPerDay, daysPerYear, textureLocation,
            startAngle, inclination)
 {
+    qDebug() << "DeathStar constructor called:" << QString::fromStdString(name);
     _cone = std::make_shared<Cone>("Death Ray", radius);
 }
 
 void DeathStar::init()
 {
+    qDebug() << "DeathStar::init() called for" << QString::fromStdString(_name);
     Planet::init();
     if (_cone)
         _cone->init();
@@ -26,6 +29,7 @@ void DeathStar::init()
 
 void DeathStar::recreate()
 {
+    qDebug() << "DeathStar::recreate() called for" << QString::fromStdString(_name);
     Planet::recreate();
     if (_cone)
         _cone->recreate();
@@ -33,6 +37,7 @@ void DeathStar::recreate()
 
 void DeathStar::setResolution(unsigned int segments)
 {
+    qDebug() << "DeathStar::setResolution() called with segments:" << segments;
     Planet::setResolution(segments);
     if (_cone)
         _cone->setResolution(segments);
@@ -40,7 +45,6 @@ void DeathStar::setResolution(unsigned int segments)
 
 void DeathStar::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 {
-    // 1. Definiere die Basis-Matrix (flach oder 3D)
     glm::mat4 baseOperatingMatrix;
     if (Config::show3DOrbits)
         baseOperatingMatrix = glm::rotate(modelViewMatrix, glm::radians(_inclination), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -52,7 +56,6 @@ void DeathStar::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 
     float elapsedSimulatedDays = (elapsedTimeMs / 60000.0f) * Config::animationSpeed;
 
-    // 2. Rotationen berechnen
     if(Config::localRotation)
         _localRotation += elapsedSimulatedDays * _localRotationSpeed;
 
@@ -64,7 +67,6 @@ void DeathStar::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
     while(_localRotation >= 360.f) _localRotation -= 360.0f;
     while(_localRotation < 0.0f) _localRotation += 360.0f;
 
-    // 3. Eigene ModelView-Matrix berechnen
     std::stack<glm::mat4> modelview_stack;
     modelview_stack.push(baseOperatingMatrix);
         modelview_stack.top() = glm::rotate(modelview_stack.top(), glm::radians(_globalRotation), glm::vec3(0,1,0));
@@ -73,7 +75,6 @@ void DeathStar::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
         _modelViewMatrix = glm::mat4(modelview_stack.top());
     modelview_stack.pop();
 
-    // 4. Update Cone (und andere Kinder, falls vorhanden)
     if (_cone)
         _cone->update(elapsedTimeMs, _modelViewMatrix);
 
@@ -85,37 +86,19 @@ void DeathStar::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 
 void DeathStar::draw(glm::mat4 projection_matrix) const
 {
-    // Zeichne den Planeten (Kugel) und seinen Orbit/Pfad
     Planet::draw(projection_matrix);
 
-    // --- MODIFIZIERT: Kegel zeichnen ---
     if (_cone)
     {
-        // Wir wollen den Strahl als transparentes Objekt rendern.
-
-        // 1. Blending aktivieren (Durchsichtigkeit)
         glEnable(GL_BLEND);
-
-        // 2. Standard-Alpha-Blending verwenden
-        // (Farbe * Alpha) + (Was dahinter liegt * (1 - Alpha))
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        // 3. Tiefentest AKTIVIERT lassen (glEnable)
-        // Der Strahl soll korrekt vom Todesstern verdeckt werden.
-        // Die 'draw'-Methode von Planet sollte den Tiefentest am Ende
-        // wieder aktiviert haben (glEnable(GL_DEPTH_TEST)).
-
-        // 4. Culling deaktivieren, damit man den Strahl auch von innen sieht.
         glDisable(GL_CULL_FACE);
 
-        // 5. Kegel (Laserstrahl) zeichnen
         _cone->draw(projection_matrix);
 
-        // 6. OpenGL-Zustand für den Rest der Szene wiederherstellen
         glEnable(GL_CULL_FACE);
         glDisable(GL_BLEND);
     }
-    // --- ENDE MODIFIZIERT ---
 }
 
 std::shared_ptr<Cone> DeathStar::cone() const

@@ -10,7 +10,7 @@ class Orbit;
 class Path;
 class Sun;
 class Cone;
-class Ring; // NEU: Forward declaration
+class Ring;
 
 class Planet : public Drawable
 {
@@ -36,10 +36,8 @@ public:
 
     virtual void setResolution(unsigned int segments) override;
 
-    // NEU: Setter für die Wolkentextur
     virtual void setCloudTexture(std::string textureLocation);
 
-    // NEU: Setter für den Ring
     virtual void setRing(std::shared_ptr<Ring> ring);
 
     ~Planet();
@@ -59,18 +57,16 @@ protected:
     float _globalRotation;
     float _globalRotationSpeed;
 
-    float _totalTimeMs = 0.0f; // NEU: Für Animation
+    float _totalTimeMs = 0.0f;
 
     unsigned int _indexCount = 0;
 
     std::string _textureLocation;
     GLuint _textureID = 0;
 
-    // NEU: Variablen für Wolkentextur
     std::string _cloudTextureLocation;
     GLuint _cloudTextureID = 0;
 
-    // NEU: Variable für den Ring
     std::shared_ptr<Ring> _ring;
 
     std::shared_ptr<Orbit> _orbit;

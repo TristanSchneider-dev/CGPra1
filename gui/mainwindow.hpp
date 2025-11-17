@@ -30,7 +30,6 @@ private slots:
     void setLocalOrbits(bool value);
     void setPolygonResolution(int value);
 
-    // --- NEU HINZUGEFÜGT ---
     void setLaserCutoff(int value);
 
 

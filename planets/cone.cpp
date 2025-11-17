@@ -14,14 +14,15 @@
 
 #include "gui/config.h"
 
+#include <QDebug>
+
 Cone::Cone(std::string name, float distance):
     Drawable(name),
     _distance(distance), _angle(.0f)
 {
+    qDebug() << "Cone constructor called:" << QString::fromStdString(name);
     _angle = -1.0f;
 }
-
-
 
 void Cone::draw(glm::mat4 projection_matrix) const
 {
@@ -46,6 +47,7 @@ void Cone::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 {
     if (std::abs(_angle - Config::laserCutoff) > 0.1f)
     {
+        qDebug() << "Cone::update() triggering recreate() due to laserCutoff change.";
         recreate();
     }
 
@@ -58,20 +60,17 @@ void Cone::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 
 std::string Cone::getVertexShader() const
 {
-    // Der simple Vertex-Shader ist weiterhin korrekt
     return Drawable::loadShaderFile(":/shader/simple.vs.glsl");
 }
 
 std::string Cone::getFragmentShader() const
 {
-    // --- MODIFIZIERT ---
-    // Wir verwenden unseren neuen, roten transparenten Shader
     return Drawable::loadShaderFile(":/shader/cone.fs.glsl");
-    // --- ENDE MODIFIZIERT ---
 }
 
 void Cone::createObject()
 {
+    qDebug() << "Cone::createObject() called for" << QString::fromStdString(_name);
     float height = 10.0f;
     float angleRad = glm::radians(Config::laserCutoff);
     float baseRadius = tan(angleRad) * height;
@@ -85,7 +84,6 @@ void Cone::createObject()
     std::vector<glm::vec2> texCoords;
     std::vector<unsigned int> indices;
 
-    // ... (Geometrie-Erstellung bleibt gleich) ...
     unsigned int apexIndex = 0;
     positions.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
     normals.push_back(glm::vec3(0.0f, -1.0f, 0.0f));

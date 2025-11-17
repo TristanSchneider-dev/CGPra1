@@ -6,15 +6,17 @@
 #include "glbase/gltool.hpp"
 #include "gui/config.h"
 
-// Diese Includes beheben die 'incomplete type' Fehler
 #include "planets/orbit.h"
 #include "planets/path.h"
+
+#include <QDebug>
 
 Sun::Sun(std::string name, float radius, float distance, float hoursPerDay, float daysPerYear, std::string textureLocation,
          float startAngle, float inclination):
     Planet(name, radius, distance, hoursPerDay, daysPerYear, textureLocation,
            startAngle, inclination)
 {
+    qDebug() << "Sun constructor called for:" << QString::fromStdString(_name);
 }
 
 glm::vec3 Sun::getPosition() const
@@ -24,7 +26,6 @@ glm::vec3 Sun::getPosition() const
 
 void Sun::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 {
-    // 1. Definiere die Basis-Matrix (flach oder 3D)
     glm::mat4 baseOperatingMatrix;
     if (Config::show3DOrbits)
         baseOperatingMatrix = glm::rotate(modelViewMatrix, glm::radians(_inclination), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -36,7 +37,6 @@ void Sun::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 
     float elapsedSimulatedDays = (elapsedTimeMs / 60000.0f) * Config::animationSpeed;
 
-    // 2. Rotationen berechnen
     if(Config::localRotation)
         _localRotation += elapsedSimulatedDays * _localRotationSpeed;
 
@@ -48,7 +48,6 @@ void Sun::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
     while(_localRotation >= 360.f) _localRotation -= 360.0f;
     while(_localRotation < 0.0f) _localRotation += 360.0f;
 
-    // 3. Eigene ModelView-Matrix berechnen
     std::stack<glm::mat4> modelview_stack;
     modelview_stack.push(baseOperatingMatrix);
         modelview_stack.top() = glm::rotate(modelview_stack.top(), glm::radians(_globalRotation), glm::vec3(0,1,0));
@@ -57,7 +56,6 @@ void Sun::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
         _modelViewMatrix = glm::mat4(modelview_stack.top());
     modelview_stack.pop();
 
-    // 4. REKURSION: Kinder updaten (DER TRICK)
     bool originalGlobalRotationState = Config::GlobalRotation;
     Config::GlobalRotation = Config::localOrbits;
 

@@ -20,13 +20,11 @@ public:
     virtual void init() override;
     virtual void recreate() override;
 
-    // WICHTIG: Überschreiben
     virtual void update(float elapsedTimeMs, glm::mat4 modelViewMatrix) override;
 
     virtual void draw(glm::mat4 projection_matrix) const override;
     std::shared_ptr<Cone> cone() const;
 
-    // --- NEU HINZUGEFÜGT ---
     virtual void setResolution(unsigned int segments) override;
 
 protected:

@@ -11,7 +11,9 @@
 
 #include "glbase/gltool.hpp"
 #include "gui/config.h"
-#include "planets/sun.h" // Für Beleuchtungsinformationen
+#include "planets/sun.h"
+
+#include <QDebug>
 
 Ring::Ring(std::string name,
            float innerRadius,
@@ -26,10 +28,12 @@ Ring::Ring(std::string name,
       _textureID(0),
       _indexCount(0)
 {
+    qDebug() << "Ring constructor called for:" << QString::fromStdString(_name);
 }
 
 void Ring::init()
 {
+    qDebug() << "Ring::init() called for:" << QString::fromStdString(_name);
     Drawable::init();
 
     if (!_textureLocation.empty())
@@ -37,16 +41,13 @@ void Ring::init()
         _textureID = loadTexture(_textureLocation);
         if (_textureID == 0)
         {
-            std::cerr << "Could not load texture for " << _name << " from " << _textureLocation << std::endl;
+            qDebug() << "Could not load texture for" << QString::fromStdString(_name) << "from" << QString::fromStdString(_textureLocation);
         }
     }
 }
 
 void Ring::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 {
-    // Die ModelViewMatrix ist die des Planetenzentrums (vor der lokalen Rotation des Planeten).
-    // Wir wenden hier die axiale Neigung des Rings an.
-    // Rotation um die X-Achse neigt den Ring korrekt.
     _modelViewMatrix = glm::rotate(modelViewMatrix, glm::radians(_axialTilt), glm::vec3(1.0f, 0.0f, 0.0f));
 }
 
@@ -54,19 +55,17 @@ void Ring::draw(glm::mat4 projection_matrix) const
 {
     if (_program == 0)
     {
-        std::cerr << "Ring " << _name << " not initialized. Call init() first." << std::endl;
+        qDebug() << "Ring" << QString::fromStdString(_name) << "not initialized. Call init() first.";
         return;
     }
 
     glUseProgram(_program);
     glBindVertexArray(_vertexArrayObject);
 
-    // Binde Ring-Textur an Einheit 0
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _textureID);
     glUniform1i(glGetUniformLocation(_program, "uTextureSampler"), 0);
 
-    // --- Beleuchtungs-Uniforms (wie in Planet::draw) ---
     glm::vec3 lightPosView = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
@@ -78,14 +77,12 @@ void Ring::draw(glm::mat4 projection_matrix) const
 
     glUniform3fv(glGetUniformLocation(_program, "uLightPosView"), 1, glm::value_ptr(lightPosView));
     glUniform3fv(glGetUniformLocation(_program, "uLightColor"), 1, glm::value_ptr(lightColor));
-    // --- Ende Beleuchtung ---
 
     glUniformMatrix4fv(glGetUniformLocation(_program, "projection_matrix"), 1, GL_FALSE, glm::value_ptr(projection_matrix));
     glUniformMatrix4fv(glGetUniformLocation(_program, "modelview_matrix"), 1, GL_FALSE, glm::value_ptr(_modelViewMatrix));
 
     glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, 0);
 
-    // Unbinden
     glBindVertexArray(0);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -95,7 +92,7 @@ void Ring::draw(glm::mat4 projection_matrix) const
 
 void Ring::createObject()
 {
-    // Erstelle die Geometrie für einen flachen Ring in der XZ-Ebene
+    qDebug() << "Ring::createObject() called for:" << QString::fromStdString(_name);
     unsigned int segments = _resolutionSegments;
 
     std::vector<glm::vec3> positions;
@@ -110,31 +107,26 @@ void Ring::createObject()
         float cosA = cos(angle);
         float sinA = sin(angle);
 
-        // Innerer Vertex
         positions.push_back(glm::vec3(_innerRadius * cosA, 0.0f, _innerRadius * sinA));
-        normals.push_back(glm::vec3(0.0f, 1.0f, 0.0f)); // Ring ist flach, Normale zeigt nach oben
-        texCoords.push_back(glm::vec2(0.0f, u)); // V-Koordinate läuft mit dem Winkel mit, U=0
+        normals.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
+        texCoords.push_back(glm::vec2(0.0f, u));
 
-        // Äußerer Vertex
         positions.push_back(glm::vec3(_outerRadius * cosA, 0.0f, _outerRadius * sinA));
         normals.push_back(glm::vec3(0.0f, 1.0f, 0.0f));
-        texCoords.push_back(glm::vec2(1.0f, u)); // V-Koordinate läuft mit, U=1
+        texCoords.push_back(glm::vec2(1.0f, u));
     }
 
-    // Indizes erstellen (aus den Vertices Quads/Dreiecke bauen)
     for (unsigned int i = 0; i < segments; ++i)
     {
-        unsigned int v1 = i * 2;       // Innerer Vertex, aktueller Winkel
-        unsigned int v2 = v1 + 1;      // Äußerer Vertex, aktueller Winkel
-        unsigned int v3 = (i + 1) * 2; // Innerer Vertex, nächster Winkel
-        unsigned int v4 = v3 + 1;      // Äußerer Vertex, nächster Winkel
+        unsigned int v1 = i * 2;
+        unsigned int v2 = v1 + 1;
+        unsigned int v3 = (i + 1) * 2;
+        unsigned int v4 = v3 + 1;
 
-        // 1. Dreieck (v1, v3, v2)
         indices.push_back(v1);
         indices.push_back(v3);
         indices.push_back(v2);
 
-        // 2. Dreieck (v2, v3, v4)
         indices.push_back(v2);
         indices.push_back(v3);
         indices.push_back(v4);
@@ -142,7 +134,6 @@ void Ring::createObject()
 
     _indexCount = static_cast<unsigned int>(indices.size());
 
-    // --- VAO und VBOs erstellen/aktualisieren (Code von Planet::createObject kopiert) ---
     if (_vertexArrayObject == 0)
         glGenVertexArrays(1, &_vertexArrayObject);
     glBindVertexArray(_vertexArrayObject);
@@ -179,18 +170,17 @@ void Ring::createObject()
 
 void Ring::setLights(std::shared_ptr<Sun> sun, std::shared_ptr<Cone> laser)
 {
+    qDebug() << "Ring::setLights() called for:" << QString::fromStdString(_name);
     _sun = sun;
     _laser = laser;
 }
 
 std::string Ring::getVertexShader() const
 {
-    // Wir können den Vertex-Shader des Planeten wiederverwenden
     return Drawable::loadShaderFile(":/shader/phong.vs.glsl");
 }
 
 std::string Ring::getFragmentShader() const
 {
-    // Wir brauchen einen eigenen Fragment-Shader für das Alpha-Blending
     return Drawable::loadShaderFile(":/shader/ring.fs.glsl");
 }

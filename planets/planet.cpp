@@ -14,13 +14,14 @@
 #include <vector>
 
 #include "glbase/gltool.hpp"
-#include "gui/config.h" // WICHTIG
+#include "gui/config.h"
 #include "planets/cone.h"
 #include "planets/sun.h"
 #include "planets/orbit.h"
 #include "planets/path.h"
 #include "planets/ring.h"
 
+#include <QDebug>
 
 Planet::Planet(std::string name,
                float radius,
@@ -42,6 +43,7 @@ Planet::Planet(std::string name,
     _globalRotation(startAngle),
     _ring(nullptr)
 {
+    qDebug() << "Planet constructor called for:" << QString::fromStdString(_name);
     if (hoursPerDay > 0.0f)
         _localRotationSpeed = (24.0f / hoursPerDay) * 360.0f;
     else
@@ -58,6 +60,7 @@ Planet::Planet(std::string name,
 
 void Planet::init()
 {
+    qDebug() << "Planet::init() called for:" << QString::fromStdString(_name);
     Drawable::init();
 
     if (_ring)
@@ -68,7 +71,7 @@ void Planet::init()
         _textureID = loadTexture(_textureLocation);
         if (_textureID == 0)
         {
-            std::cerr << "Could not load texture for " << _name << " from " << _textureLocation << std::endl;
+            qDebug() << "Could not load texture for" << QString::fromStdString(_name) << "from" << QString::fromStdString(_textureLocation);
         }
     }
 
@@ -77,7 +80,7 @@ void Planet::init()
         _cloudTextureID = loadTexture(_cloudTextureLocation);
         if (_cloudTextureID == 0)
         {
-            std::cerr << "Could not load cloud texture for " << _name << " from " << _cloudTextureLocation << std::endl;
+            qDebug() << "Could not load cloud texture for" << QString::fromStdString(_name) << "from" << QString::fromStdString(_cloudTextureLocation);
         }
     }
 
@@ -91,6 +94,7 @@ void Planet::init()
 
 void Planet::recreate()
 {
+    qDebug() << "Planet::recreate() called for:" << QString::fromStdString(_name);
     Drawable::recreate();
 
     if (_ring)
@@ -114,14 +118,12 @@ void Planet::draw(glm::mat4 projection_matrix) const
     }
 
     if(_program == 0){
-        std::cerr << "Planet" << _name << "not initialized. Call init() first." << std::endl;
+        qDebug() << "Planet" << QString::fromStdString(_name) << "not initialized. Call init() first.";
         return;
     }
 
     glUseProgram(_program);
     glBindVertexArray(_vertexArrayObject);
-
-    // --- TEXTUR-BINDING START ---
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _textureID);
@@ -139,9 +141,6 @@ void Planet::draw(glm::mat4 projection_matrix) const
     float timeInSeconds = _totalTimeMs / 1000.0f;
     glUniform1f(glGetUniformLocation(_program, "uTime"), timeInSeconds);
 
-    // --- TEXTUR-BINDING ENDE ---
-
-    // --- SONNENLICHT-UNIFORMS ---
     glm::vec3 lightPosView = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
@@ -154,17 +153,13 @@ void Planet::draw(glm::mat4 projection_matrix) const
     glUniform3fv(glGetUniformLocation(_program, "uLightPosView"), 1, glm::value_ptr(lightPosView));
     glUniform3fv(glGetUniformLocation(_program, "uLightColor"), 1, glm::value_ptr(lightColor));
 
-    // --- NEU: LASER-UNIFORMS ---
     bool hasLaser = (_laser != nullptr);
     glUniform1i(glGetUniformLocation(_program, "uHasLaser"), hasLaser);
     if (hasLaser)
     {
-        // Hole die Daten vom Cone-Objekt (das als _laser gespeichert ist)
         glm::vec3 laserPosView = _laser->getPosition();
         glm::vec3 laserDirView = _laser->getDirection();
 
-        // Hole den Winkel aus der Config (in Grad) und konvertiere in Cosinus
-        // Wir übergeben den Cosinus, weil das im Shader effizienter ist.
         float cutoffAngleRad = glm::radians(Config::laserCutoff);
         float cutoffCos = cos(cutoffAngleRad);
 
@@ -172,17 +167,14 @@ void Planet::draw(glm::mat4 projection_matrix) const
         glUniform3fv(glGetUniformLocation(_program, "uLaserDirView"), 1, glm::value_ptr(laserDirView));
         glUniform1f(glGetUniformLocation(_program, "uLaserCutoffCos"), cutoffCos);
 
-        // Laserfarbe ist Rot
         glUniform3f(glGetUniformLocation(_program, "uLaserColor"), 1.0f, 0.0f, 0.0f);
     }
-    // --- ENDE NEU ---
 
     glUniformMatrix4fv(glGetUniformLocation(_program, "projection_matrix"), 1, GL_FALSE, glm::value_ptr(projection_matrix));
     glUniformMatrix4fv(glGetUniformLocation(_program, "modelview_matrix"), 1, GL_FALSE, glm::value_ptr(_modelViewMatrix));
 
     glDrawElements(GL_TRIANGLES, _indexCount, GL_UNSIGNED_INT, 0);
 
-    // Unbinden
     glBindVertexArray(0);
 
     if (hasClouds)
@@ -193,7 +185,6 @@ void Planet::draw(glm::mat4 projection_matrix) const
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 
-    // --- Ring zeichnen (nach dem Planeten) ---
     if (_ring)
     {
         glDisable(GL_CULL_FACE);
@@ -265,6 +256,7 @@ void Planet::update(float elapsedTimeMs, glm::mat4 modelViewMatrix)
 
 void Planet::setResolution(unsigned int segments)
 {
+    qDebug() << "Planet::setResolution() called for:" << QString::fromStdString(_name) << "with segments:" << segments;
     Drawable::setResolution(segments);
 
     if (_orbit)
@@ -281,6 +273,7 @@ void Planet::setResolution(unsigned int segments)
 
 void Planet::setLights(std::shared_ptr<Sun> sun, std::shared_ptr<Cone> laser)
 {
+    qDebug() << "Planet::setLights() called for:" << QString::fromStdString(_name);
     _sun = sun;
     _laser = laser;
 
@@ -293,16 +286,19 @@ void Planet::setLights(std::shared_ptr<Sun> sun, std::shared_ptr<Cone> laser)
 
 void Planet::setRing(std::shared_ptr<Ring> ring)
 {
+    qDebug() << "Planet::setRing() called for:" << QString::fromStdString(_name);
     _ring = ring;
 }
 
 void Planet::addChild(std::shared_ptr<Planet> child)
 {
+    qDebug() << "Planet::addChild() called for:" << QString::fromStdString(_name) << "adding child:" << QString::fromStdString(child->_name);
     _children.push_back(child);
 }
 
 
 void Planet::createObject(){
+    qDebug() << "Planet::createObject() called for:" << QString::fromStdString(_name);
     unsigned int latitudeSegments = _resolutionSegments;
     unsigned int longitudeSegments = _resolutionSegments;
 
@@ -393,12 +389,9 @@ std::string Planet::getFragmentShader() const
 Planet::~Planet(){
 }
 
-/*************************************************
- * Path-Logik (bleibt unverändert)
- *************************************************/
-
 void Planet::calculatePath(glm::mat4 modelViewMatrix)
 {
+    qDebug() << "Planet::calculatePath() called for:" << QString::fromStdString(_name);
     for(auto child : _children){
         unsigned int longestCommonMultiple = child->getCommonYears(_daysPerYear);
         for(unsigned int i = 0; i <= longestCommonMultiple; i++){
@@ -461,6 +454,7 @@ void Planet::addPathPoint(){
 }
 
 void Planet::createPath(){
+    qDebug() << "Planet::createPath() called for:" << QString::fromStdString(_name);
     _path->recreate();
     for(auto child : _children)
         child->createPath();
@@ -468,5 +462,6 @@ void Planet::createPath(){
 
 void Planet::setCloudTexture(std::string textureLocation)
 {
+    qDebug() << "Planet::setCloudTexture() called for:" << QString::fromStdString(_name);
     _cloudTextureLocation = textureLocation;
 }

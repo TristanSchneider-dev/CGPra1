@@ -3,40 +3,44 @@
 #include <QFile>
 #include <QTextStream>
 #include <QImage>
-#include <QGLWidget> // Für convertToGLFormat
+#include <QGLWidget>
+#include <QDebug>
 
 #include <iostream>
 #include <vector>
 
-#include "glbase/gltool.hpp" // Für VERIFY
+#include "glbase/gltool.hpp"
 
 Drawable::Drawable(std::string name):
     _name(name),
     _program(0),
     _modelViewMatrix(glm::mat4(1.0f)),
-    _resolutionSegments(60), // Standard-Auflösung
-    // --- NEU: Buffer initialisieren ---
+    _resolutionSegments(60),
     _vertexArrayObject(0),
     _positionBuffer(0),
     _normalBuffer(0),
     _texCoordBuffer(0),
     _indexBuffer(0)
 {
+    qDebug() << "Drawable constructor called for:" << QString::fromStdString(_name);
 }
 
 void Drawable::init()
 {
+    qDebug() << "Drawable::init() called for:" << QString::fromStdString(_name);
     initShader();
     createObject();
 }
 
 void Drawable::recreate()
 {
+    qDebug() << "Drawable::recreate() called for:" << QString::fromStdString(_name);
     createObject();
 }
 
 void Drawable::setResolution(unsigned int segments)
 {
+    qDebug() << "Drawable::setResolution() called for:" << QString::fromStdString(_name) << "with segments:" << segments;
     if (segments < 3)
         _resolutionSegments = 3;
     else
@@ -45,9 +49,9 @@ void Drawable::setResolution(unsigned int segments)
     recreate();
 }
 
-// --- KOMPLETT NEUE initShader() FUNKTION ---
 void Drawable::initShader()
 {
+    qDebug() << "Drawable::initShader() called for:" << QString::fromStdString(_name);
     _program = glCreateProgram();
 
     std::string vs_string = getVertexShader();
@@ -55,12 +59,10 @@ void Drawable::initShader()
     const char* vs_data = vs_string.c_str();
     const char* fs_data = fs_string.c_str();
 
-    // --- Vertex Shader Kompilierung ---
     GLuint vs = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vs, 1, &vs_data, NULL);
     glCompileShader(vs);
 
-    // Fehlerprüfung
     GLint vs_status;
     glGetShaderiv(vs, GL_COMPILE_STATUS, &vs_status);
     if (vs_status == GL_FALSE) {
@@ -68,16 +70,14 @@ void Drawable::initShader()
         glGetShaderiv(vs, GL_INFO_LOG_LENGTH, &logLen);
         std::vector<char> log(logLen);
         glGetShaderInfoLog(vs, logLen, NULL, log.data());
-        std::cerr << "Vertex Shader Compile Error (" << _name << "): " << log.data() << std::endl;
+        qDebug() << "Vertex Shader Compile Error (" << QString::fromStdString(_name) << "): " << log.data();
     }
     glAttachShader(_program, vs);
 
-    // --- Fragment Shader Kompilierung ---
     GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fs, 1, &fs_data, NULL);
     glCompileShader(fs);
 
-    // Fehlerprüfung
     GLint fs_status;
     glGetShaderiv(fs, GL_COMPILE_STATUS, &fs_status);
     if (fs_status == GL_FALSE) {
@@ -85,14 +85,12 @@ void Drawable::initShader()
         glGetShaderiv(fs, GL_INFO_LOG_LENGTH, &logLen);
         std::vector<char> log(logLen);
         glGetShaderInfoLog(fs, logLen, NULL, log.data());
-        std::cerr << "Fragment Shader Compile Error (" << _name << "): " << log.data() << std::endl;
+        qDebug() << "Fragment Shader Compile Error (" << QString::fromStdString(_name) << "): " << log.data();
     }
     glAttachShader(_program, fs);
 
-    // --- Shader-Programm Linken ---
     glLinkProgram(_program);
 
-    // Fehlerprüfung
     GLint link_status;
     glGetProgramiv(_program, GL_LINK_STATUS, &link_status);
     if (link_status == GL_FALSE) {
@@ -100,18 +98,16 @@ void Drawable::initShader()
         glGetProgramiv(_program, GL_INFO_LOG_LENGTH, &logLen);
         std::vector<char> log(logLen);
         glGetProgramInfoLog(_program, logLen, NULL, log.data());
-        std::cerr << "Shader Program Link Error (" << _name << "): " << log.data() << std::endl;
+        qDebug() << "Shader Program Link Error (" << QString::fromStdString(_name) << "): " << log.data();
     }
 }
-// --- ENDE DER NEUEN FUNKTION ---
 
 std::string Drawable::loadShaderFile(std::string path) const
 {
-    // Nutze Qt-Ressourcensystem, um Shader-Datei zu laden
     QFile f(QString::fromStdString(path));
     if (!f.open(QFile::ReadOnly | QFile::Text))
     {
-        std::cerr << "Could not load shader file: " << path << std::endl;
+        qDebug() << "Could not load shader file:" << QString::fromStdString(path);
         return "";
     }
     QTextStream in(&f);
@@ -120,13 +116,12 @@ std::string Drawable::loadShaderFile(std::string path) const
 
 GLuint Drawable::loadTexture(std::string path)
 {
-    // Nutze Qt, um Textur zu laden
     QImage tex;
     tex.load(QString::fromStdString(path));
     tex = QGLWidget::convertToGLFormat(tex);
 
     if(tex.isNull()){
-        std::cerr << "Could not load texture file: " << path << std::endl;
+        qDebug() << "Could not load texture file:" << QString::fromStdString(path);
         return 0;
     }
 
